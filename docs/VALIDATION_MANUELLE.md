@@ -1,9 +1,15 @@
 # Validation manuelle sur iPhone
 
 > **Rien de ce qui suit n'a été exécuté.** L'environnement dans lequel ce projet
-> a été écrit n'a ni Mac, ni Xcode, ni simulateur, ni iPhone : aucun code n'a
-> été compilé, aucun test n'a tourné, et l'application n'a jamais été ouverte.
-> Cette liste est le mode d'emploi de la vérification qui reste à faire.
+> a été écrit n'a ni Mac, ni Xcode, ni simulateur, ni iPhone : l'application n'a
+> jamais été ouverte sur un appareil, et l'écran verrouillé n'a jamais été
+> observé.
+>
+> La CI, elle, compile, archive et teste sur simulateur — le détail de ce qui est
+> couvert et de ce qui ne l'est pas est dans `LIMITES_CONNUES.md`. Un simulateur
+> ne dit rien de ce qui se passe sur un vrai téléphone, ce qui est précisément
+> l'objet de cette liste.
+>
 > Annoncer « testé sur iPhone » sans l'avoir fait serait un mensonge.
 
 ---

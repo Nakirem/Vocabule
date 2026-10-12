@@ -7,16 +7,36 @@ des oublis.
 
 ---
 
-## 1. Rien n'a été compilé ni exécuté
+## 1. Compilé et testé en CI, jamais ouvert sur un iPhone
 
-**C'est la limite la plus importante.** L'environnement de développement de ce
-projet n'a ni Mac, ni Xcode, ni simulateur, ni iPhone. Conséquences directes :
+L'environnement de développement de ce projet n'a **ni Mac, ni Xcode, ni
+simulateur, ni iPhone**. Tout ce qui a été compilé l'a donc été par la CI, sur
+un coureur macOS — et rien ne l'a été sur un appareil réel.
 
-- Aucun fichier Swift n'a été compilé. Des erreurs de compilation peuvent
-  subsister ; elles apparaîtront au premier passage de la CI.
-- Les tests Swift n'ont jamais tourné. Les tests Python, si — ils passent.
-- L'application n'a jamais été ouverte, ni sur simulateur, ni sur appareil.
-- Le comportement de l'écran verrouillé n'a pas été observé.
+**Ce que la CI vérifie à chaque exécution** (dernier passage vert, Xcode 16.4
+build 16F6, coureur `macos-15`) :
+
+- Les **113 tests SwiftPM** passent : créneaux, changements d'heure, passage de
+  minuit, tirage déterministe, actions périmées, écritures concurrentes, et le
+  décodage des 1 432 fiches du corpus réel.
+- Les **9 tests XCTest** passent sur un simulateur iPhone.
+- L'archive `Release` pour `generic/platform=iOS` est produite, et l'extension
+  widget est contrôlée présente dans `Vocabulle.app/PlugIns/`.
+- L'IPA non signée est produite, vérifiée, puis publiée en artefact.
+
+**Ce que la CI ne peut pas vérifier, et qui reste donc inconnu :**
+
+- L'application n'a **jamais été ouverte sur un iPhone**. Le simulateur n'est pas
+  un téléphone : il ne dit rien de l'écran verrouillé, d'Always-On, ni du
+  comportement après redémarrage.
+- Le comportement de l'écran verrouillé n'a **pas été observé**.
+- L'installation par AltStore et la survie de l'App Group à la re-signature
+  n'ont pas été éprouvées.
+- Aucun test n'a tourné sur un appareil physique.
+
+Un appareil de développement ne disposant d'aucun outil Swift, le seul
+compilateur de ce projet est la CI. Une erreur de compilation ne se voit donc
+qu'après un envoi — c'est arrivé trois fois de suite pendant la mise au point.
 
 La liste de ce qui doit être vérifié est dans `VALIDATION_MANUELLE.md`.
 

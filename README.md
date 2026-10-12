@@ -175,8 +175,16 @@ le workflow n'a que la permission `contents: read`.
 ### Ce qu'il faut vérifier vous-même
 
 L'environnement de développement de ce dépôt **n'a ni Mac, ni Xcode, ni
-simulateur, ni iPhone**. Rien dans le code n'a été compilé ni exécuté sur un
-appareil réel. Les tests écrits ici n'ont pas tourné.
+simulateur, ni iPhone**. Tout ce qui a été compilé l'a été par la CI, jamais sur
+un appareil réel : **rien n'a été ouvert sur un iPhone**, et l'écran verrouillé
+n'a jamais été observé.
+
+Ce que la CI vérifie — et elle est verte : les 113 tests SwiftPM, les 9 tests
+XCTest sur simulateur, l'archivage `Release` pour `iphoneos/arm64`, la présence
+de l'extension widget dans `Vocabulle.app/PlugIns/`, et la production d'une IPA
+non signée. Ce qu'elle ne peut pas vérifier : l'écran verrouillé, Always-On, le
+comportement après redémarrage, et la survie de l'App Group à la re-signature
+AltStore. Le simulateur n'est pas un téléphone.
 
 La liste de ce qui reste à valider sur un vrai téléphone — et notamment le
 comportement de l'écran verrouillé, qui ne peut être vérifié nulle part
