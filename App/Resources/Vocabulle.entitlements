@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Le groupe partagé est le seul lien entre l'application et l'extension
+	     widget. Il n'est PAS garanti : un profil de développement gratuit
+	     (AltStore Classic avec un compte Apple gratuit) ne porte pas
+	     l'entitlement com.apple.security.application-groups, et le système
+	     renvoie alors nil sans erreur. L'application doit donc rester
+	     fonctionnelle sans lui — voir SharedContainer.resolve, qui retombe sur
+	     un dossier isolé et l'affiche dans les réglages.
+	     Ne jamais contourner cette absence par deux magasins privés
+	     divergents : l'écran verrouillé et l'application afficheraient alors
+	     deux termes différents. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.fr.vocabulle.app</string>
+	</array>
+</dict>
+</plist>

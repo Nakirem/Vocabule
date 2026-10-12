@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>fr</string>
+	<key>CFBundleDisplayName</key>
+	<string>Vocabulle</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<!-- Une extension est un bundle XPC, pas une application. -->
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+		<!-- NSExtensionPrincipalClass et NSExtensionMainStoryboard sont
+		     volontairement ABSENTS. Le point d'entrée est fourni par
+		     l'attribut @main sur le WidgetBundle. Les déclarer produit
+		     exactement l'erreur qu'on veut éviter :
+		     « defines a principal class which is not allowed for the
+		     extension point com.apple.widgetkit-extension » à
+		     l'installation, et « NSExtensionPrincipalClass is unexpected »
+		     au dépôt sur l'App Store. -->
+	</dict>
+</dict>
+</plist>

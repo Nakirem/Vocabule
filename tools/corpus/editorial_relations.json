@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "rationale": "Rapprochements rédigés à la main, et assumés comme tels. Le cahier des charges demande que chaque terme associé porte une justification défendable, et distingue un lien attesté par la source d'un rapprochement éditorial. Ce fichier ne contient que des seconds : des liens que le Wiktionnaire n'énonce nulle part, mais qu'on peut expliquer en une phrase vérifiable. Les termes sont écrits en clair, pas en identifiants : la conversion est faite par normalize.slug, ce qui évite qu'un identifiant écrit de mémoire ne corresponde à rien et fasse disparaître la relation en silence. Ces rapprochements viennent en complément, jamais à la place, des liens attestés.",
+  "pairs": [
+    { "from": "victoire à la Pyrrhus", "to": "talon d'Achille", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions tirent leur sens d'un nom propre de l'Antiquité grecque, que celui qui les emploie n'a pas besoin de connaître pour être compris." },
+    { "from": "victoire à la Pyrrhus", "to": "épée de Damoclès", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions désignent une situation dont le prix ou la menace l'emporte sur l'avantage apparent, et toutes deux viennent d'un récit de l'Antiquité grecque." },
+    { "from": "victoire à la Pyrrhus", "to": "nœud gordien", "type": "contrast", "rationale": "Rapprochement éditorial : le nœud gordien se tranche et la victoire à la Pyrrhus se paie. Les deux expressions disent ce qu'il en coûte de résoudre un problème, l'une par l'audace, l'autre par le prix." },
+
+    { "from": "talon d'Achille", "to": "épée de Damoclès", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions désignent une vulnérabilité ou une menace précise, suspendue au-dessus d'une situation qui paraît solide." },
+    { "from": "talon d'Achille", "to": "nœud gordien", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions viennent d'un récit de l'Antiquité grecque et désignent un point unique où se joue une situation entière." },
+
+    { "from": "épée de Damoclès", "to": "supplice de Tantale", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions décrivent une situation où le bien convoité reste hors d'atteinte, et viennent d'un récit de l'Antiquité grecque." },
+    { "from": "épée de Damoclès", "to": "tonneau des Danaïdes", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions désignent une situation sans issue — l'une par la menace qui ne se retire pas, l'autre par la tâche qui ne s'achève jamais." },
+
+    { "from": "boîte de Pandore", "to": "tonneau des Danaïdes", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions viennent d'un récit de l'Antiquité grecque et disent qu'une fois le processus engagé, on ne peut plus le retenir." },
+    { "from": "boîte de Pandore", "to": "supplice de Tantale", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions décrivent une conséquence qu'on a provoquée et qu'on ne peut plus écarter, et viennent d'un récit de l'Antiquité grecque." },
+    { "from": "boîte de Pandore", "to": "pierre d'achoppement", "type": "contrast", "rationale": "Rapprochement éditorial : la pierre d'achoppement arrête net, la boîte de Pandore libère ce qui ne s'arrête plus. Les deux expressions disent où naît l'embarras, par l'obstacle ou par l'ouverture." },
+
+    { "from": "tonneau des Danaïdes", "to": "travail de Pénélope", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions désignent une tâche qui se défait à mesure qu'elle s'accomplit, et viennent d'un récit de l'Antiquité grecque." },
+    { "from": "tonneau des Danaïdes", "to": "lit de Procuste", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions viennent d'un récit de l'Antiquité grecque et désignent une contrainte qui ne laisse aucune marge." },
+
+    { "from": "lit de Procuste", "to": "nœud gordien", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions désignent une contrainte rigide qu'il faut trancher plutôt qu'aménager, et viennent d'un récit de l'Antiquité grecque." },
+    { "from": "lit de Procuste", "to": "travail de Pénélope", "type": "contrast", "rationale": "Rapprochement éditorial : le lit de Procuste impose une mesure arbitraire, le travail de Pénélope n'en finit pas de la remettre en cause. Les deux disent ce qu'une règle fixe coûte au réel." },
+
+    { "from": "nœud gordien", "to": "franchir le Rubicon", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions désignent une décision irréversible prise d'un coup, et viennent d'un épisode de l'Antiquité." },
+    { "from": "nœud gordien", "to": "fil d'Ariane", "type": "contrast", "rationale": "Rapprochement éditorial : le nœud gordien se coupe, le fil d'Ariane se suit. Les deux expressions disent comment sortir d'une difficulté — par la rupture ou par la patience — et viennent du même fonds grec." },
+
+    { "from": "fil d'Ariane", "to": "supplice de Tantale", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions viennent d'un récit de l'Antiquité grecque et désignent un chemin dont on ne maîtrise pas le terme." },
+    { "from": "fil d'Ariane", "to": "franchir le Rubicon", "type": "contrast", "rationale": "Rapprochement éditorial : le fil d'Ariane est un moyen de revenir sur ses pas, le Rubicon un point qu'on ne repasse pas. Les deux expressions disent comment une décision engage un parcours." },
+
+    { "from": "supplice de Tantale", "to": "travail de Pénélope", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions viennent d'un récit de l'Antiquité grecque et désignent un effort dont le résultat se dérobe." },
+
+    { "from": "baiser de Judas", "to": "bouc émissaire", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions viennent d'un épisode biblique et désignent celui qui paie pour une faute ou une trahison qui le dépasse." },
+    { "from": "baiser de Judas", "to": "pierre d'achoppement", "type": "contrast", "rationale": "Rapprochement éditorial : la trahison vient d'une personne, la pierre d'achoppement d'une difficulté. Les deux expressions désignent ce qui fait échouer une entreprise, et viennent du même fonds biblique." },
+
+    { "from": "bouc émissaire", "to": "pierre d'achoppement", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux expressions viennent d'un épisode biblique et désignent ce sur quoi une responsabilité se décharge, que ce soit sur une personne ou sur un obstacle." },
+
+    { "from": "franchir le Rubicon", "to": "jeter l'éponge", "type": "contrast", "rationale": "Rapprochement éditorial : franchir le Rubicon engage, jeter l'éponge dégage. Les deux expressions marquent un point de bascule dans une entreprise, mais dans des sens opposés." },
+
+    { "from": "travail de Pénélope", "to": "faire long feu", "type": "contrast", "rationale": "Rapprochement éditorial : le travail de Pénélope se défait sans cesse, ce qui fait long feu s'arrête faute d'avoir pris. Les deux expressions disent qu'un effort n'a pas abouti, pour des raisons inverses." },
+
+    { "from": "jeter l'éponge", "to": "baisser les bras", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent l'abandon d'un effort en cours. Leurs images diffèrent — l'une vient de la boxe, l'autre du geste — mais elles s'emploient dans les mêmes situations." },
+    { "from": "jeter l'éponge", "to": "casser sa pipe", "type": "contrast", "rationale": "Rapprochement éditorial : jeter l'éponge abandonne un combat, casser sa pipe y met un terme définitif. Les deux locutions populaires disent une fin, à des degrés que l'usage distingue nettement." },
+
+    { "from": "tomber dans les pommes", "to": "casser sa pipe", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions populaires décrivent une défaillance du corps par une image détournée, et s'emploient dans les mêmes récits familiers." },
+    { "from": "tomber dans les pommes", "to": "avoir un poil dans la main", "type": "contrast", "rationale": "Rapprochement éditorial : l'une dit une faiblesse subie, l'autre une paresse entretenue. Les deux locutions parlent du corps et du travail, mais l'usage ne les confond jamais." },
+
+    { "from": "poser un lapin", "to": "mener en bateau", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions familières décrivent un manquement à la parole donnée — l'une par l'absence, l'autre par la tromperie." },
+    { "from": "poser un lapin", "to": "raconter des salades", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions familières disent qu'on n'a pas dit ou fait ce qu'on devait, par un mensonge ou par un rendez-vous manqué." },
+
+    { "from": "mener en bateau", "to": "noyer le poisson", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions usent de la même image aquatique pour dire qu'on empêche l'autre de savoir — l'une en l'égarant, l'autre en brouillant la question." },
+    { "from": "mener en bateau", "to": "vendre la mèche", "type": "contrast", "rationale": "Rapprochement éditorial : mener en bateau cache la vérité, vendre la mèche la révèle. Les deux locutions décrivent un rapport au secret, dans des directions opposées." },
+
+    { "from": "noyer le poisson", "to": "tourner autour du pot", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on évite d'aller au fait, l'une en brouillant la question, l'autre en différant le moment de la poser." },
+    { "from": "noyer le poisson", "to": "mettre les points sur les i", "type": "contrast", "rationale": "Rapprochement éditorial : noyer le poisson entretient le flou, mettre les points sur les i le dissipe. Les deux locutions disent comment on traite une ambiguïté." },
+
+    { "from": "crier sur les toits", "to": "vendre la mèche", "type": "contrast", "rationale": "Rapprochement éditorial : crier sur les toits divulgue volontairement, vendre la mèche divulgue par maladresse. Les deux locutions disent qu'un secret a cessé d'en être un." },
+    { "from": "crier sur les toits", "to": "mettre la puce à l'oreille", "type": "contrast", "rationale": "Rapprochement éditorial : l'une répand l'information au plus grand nombre, l'autre éveille un soupçon chez une seule personne. Les deux locutions décrivent la circulation d'un savoir." },
+
+    { "from": "mettre la puce à l'oreille", "to": "découvrir le pot aux roses", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions décrivent le moment où l'on commence à savoir — par un indice qui alerte, ou par la découverte de ce qui était caché." },
+    { "from": "mettre la puce à l'oreille", "to": "faire la sourde oreille", "type": "contrast", "rationale": "Rapprochement éditorial : les deux locutions jouent sur la même partie du corps pour dire l'inverse — l'une éveille l'attention, l'autre la refuse." },
+
+    { "from": "faire la sourde oreille", "to": "noyer le poisson", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions décrivent un refus d'entendre une demande, l'un par le silence, l'autre par la diversion." },
+    { "from": "faire la sourde oreille", "to": "entendre raison", "type": "contrast", "rationale": "Rapprochement éditorial : faire la sourde oreille refuse l'argument, entendre raison finit par l'accepter. Les deux locutions disent ce qu'on fait d'une objection." },
+
+    { "from": "mettre de l'eau dans son vin", "to": "entendre raison", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on renonce à une part de sa position, l'une par modération, l'autre par écoute." },
+    { "from": "mettre de l'eau dans son vin", "to": "prendre son courage à deux mains", "type": "contrast", "rationale": "Rapprochement éditorial : l'une consiste à céder du terrain, l'autre à en tenir. Les deux locutions décrivent un effort sur soi, dans des sens opposés." },
+
+    { "from": "garder la tête froide", "to": "prendre son courage à deux mains", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on maîtrise sa réaction immédiate pour agir utilement — l'une par le sang-froid, l'autre par la décision." },
+    { "from": "garder la tête froide", "to": "retourner sa veste", "type": "contrast", "rationale": "Rapprochement éditorial : garder la tête froide tient une position sous la pression, retourner sa veste l'abandonne. Les deux locutions décrivent un comportement face à une contrainte." },
+
+    { "from": "retourner sa veste", "to": "changer son fusil d'épaule", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent un revirement. L'usage les distingue par le jugement — la première est presque toujours reprochée, la seconde peut être neutre." },
+    { "from": "retourner sa veste", "to": "faire amende honorable", "type": "contrast", "rationale": "Rapprochement éditorial : retourner sa veste change de camp sans le dire, faire amende honorable reconnaît publiquement qu'on s'est trompé. Les deux locutions disent un changement de position." },
+
+    { "from": "faire amende honorable", "to": "faire table rase", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on efface ce qui précède pour repartir — l'une en le reconnaissant, l'autre en le laissant derrière soi." },
+    { "from": "faire amende honorable", "to": "avoir pignon sur rue", "type": "contrast", "rationale": "Rapprochement éditorial : l'amende honorable abaisse un instant, avoir pignon sur rue installe durablement. Les deux locutions parlent de réputation, l'une qu'on répare, l'autre qu'on établit." },
+
+    { "from": "être aux abois", "to": "être dans ses petits souliers", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent une position inconfortable dont on cherche à sortir — l'une par le danger, l'autre par la gêne." },
+    { "from": "être aux abois", "to": "avoir le vent en poupe", "type": "contrast", "rationale": "Rapprochement éditorial : les deux locutions viennent de la chasse et de la marine et disent l'inverse — être acculé, ou être porté par les circonstances." },
+
+    { "from": "aller à vau-l'eau", "to": "avoir le vent en poupe", "type": "contrast", "rationale": "Rapprochement éditorial : les deux locutions empruntent la même image du courant et du vent pour dire l'échec et la réussite d'une entreprise." },
+    { "from": "aller à vau-l'eau", "to": "battre en brèche", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'une chose se défait — l'une par abandon, l'autre sous les coups qu'elle reçoit." },
+
+    { "from": "battre en brèche", "to": "tirer à boulets rouges", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions viennent de l'artillerie et disent qu'on attaque sans ménagement, l'une l'ouvrage, l'autre la personne." },
+    { "from": "battre en brèche", "to": "porter atteinte", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux disent qu'on entame la solidité d'une chose — la première par une image militaire, la seconde dans un registre neutre." },
+
+    { "from": "prêter le flanc", "to": "porter atteinte", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions viennent du vocabulaire militaire et décrivent une atteinte — celle qu'on subit faute de s'être protégé, celle qu'on cause." },
+    { "from": "prêter le flanc", "to": "avoir les coudées franches", "type": "contrast", "rationale": "Rapprochement éditorial : prêter le flanc expose, avoir les coudées franches libère le mouvement. Les deux locutions décrivent une marge de manœuvre, subie ou accordée." },
+
+    { "from": "avoir les coudées franches", "to": "avoir voix au chapitre", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on dispose d'une marge de décision, l'une dans l'action, l'autre dans la délibération." },
+    { "from": "avoir les coudées franches", "to": "être en porte-à-faux", "type": "contrast", "rationale": "Rapprochement éditorial : avoir les coudées franches donne de l'aisance, être en porte-à-faux en retire. Les deux locutions décrivent une position dans une organisation." },
+
+    { "from": "être en porte-à-faux", "to": "être sur la sellette", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent une position exposée et difficile à tenir, l'une par déséquilibre, l'autre par mise en cause." },
+    { "from": "être en porte-à-faux", "to": "tenir le haut du pavé", "type": "contrast", "rationale": "Rapprochement éditorial : l'une dit une position intenable, l'autre une position dominante. Les deux locutions décrivent un rapport de place." },
+
+    { "from": "être sur la sellette", "to": "être le dindon de la farce", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on subit la situation plus qu'on ne la conduit, l'une par l'examen, l'autre par la duperie." },
+    { "from": "être sur la sellette", "to": "tenir le haut du pavé", "type": "contrast", "rationale": "Rapprochement éditorial : être sur la sellette expose au jugement, tenir le haut du pavé s'y soustrait. Les deux locutions décrivent une position dans un groupe." },
+
+    { "from": "être le dindon de la farce", "to": "vendre la mèche", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on a été joué ou qu'on a laissé échapper l'essentiel, dans un registre familier commun." },
+    { "from": "être le dindon de la farce", "to": "payer les pots cassés", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on supporte les conséquences d'une affaire qu'on n'a pas menée, l'une par la duperie, l'autre par la facture." },
+
+    { "from": "payer les pots cassés", "to": "avoir maille à partir", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions viennent d'anciens usages commerciaux et disent un différend qui coûte, l'une par le règlement, l'autre par la dispute." },
+    { "from": "payer les pots cassés", "to": "être la cinquième roue du carrosse", "type": "contrast", "rationale": "Rapprochement éditorial : payer les pots cassés suppose d'être concerné, être la cinquième roue du carrosse suppose de ne l'être pas. Les deux locutions décrivent une place dans une affaire collective." },
+
+    { "from": "avoir maille à partir", "to": "être à couteaux tirés", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent un conflit ouvert, l'une à propos d'un différend précis, l'autre comme état durable entre deux personnes." },
+    { "from": "avoir maille à partir", "to": "mettre son grain de sel", "type": "contrast", "rationale": "Rapprochement éditorial : avoir maille à partir affronte, mettre son grain de sel s'immisce. Les deux locutions décrivent une intervention dans les affaires d'autrui." },
+
+    { "from": "être à couteaux tirés", "to": "jeter de l'huile sur le feu", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions décrivent un conflit, l'une comme état, l'autre comme aggravation délibérée." },
+    { "from": "être à couteaux tirés", "to": "prêter main-forte", "type": "contrast", "rationale": "Rapprochement éditorial : les deux locutions décrivent un rapport de force, l'une en s'y opposant, l'autre en soutenant un camp." },
+
+    { "from": "jeter de l'huile sur le feu", "to": "mettre son grain de sel", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on intervient dans une situation sans y avoir été invité, l'une en l'envenimant, l'autre en s'y mêlant." },
+    { "from": "jeter de l'huile sur le feu", "to": "garder la tête froide", "type": "contrast", "rationale": "Rapprochement éditorial : jeter de l'huile sur le feu attise, garder la tête froide apaise. Les deux locutions décrivent une conduite dans une situation tendue." },
+
+    { "from": "mettre son grain de sel", "to": "avoir voix au chapitre", "type": "contrast", "rationale": "Rapprochement éditorial : mettre son grain de sel s'invite dans la discussion, avoir voix au chapitre y a droit. Les deux locutions disent une prise de parole, légitime ou non." },
+
+    { "from": "avoir voix au chapitre", "to": "prêter main-forte", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'on prend part à une affaire collective, l'une par l'avis, l'autre par l'effort." },
+    { "from": "avoir voix au chapitre", "to": "faire la sourde oreille", "type": "contrast", "rationale": "Rapprochement éditorial : avoir voix au chapitre donne le droit d'être entendu, faire la sourde oreille refuse d'écouter. Les deux locutions décrivent un rapport à la parole dans un groupe." },
+
+    { "from": "porter ses fruits", "to": "faire long feu", "type": "contrast", "rationale": "Rapprochement éditorial : porter ses fruits aboutit, faire long feu s'éteint. Les deux locutions disent ce que devient une entreprise qu'on a lancée." },
+    { "from": "porter ses fruits", "to": "faire chou blanc", "type": "contrast", "rationale": "Rapprochement éditorial : l'une dit la réussite d'un effort patient, l'autre l'échec d'une tentative. Les deux locutions jugent un résultat." },
+
+    { "from": "faire chou blanc", "to": "faire mouche", "type": "contrast", "rationale": "Rapprochement éditorial : les deux locutions viennent du tir et disent l'échec et la réussite d'une tentative, avec la même concision imagée." },
+    { "from": "faire chou blanc", "to": "faire d'une pierre deux coups", "type": "contrast", "rationale": "Rapprochement éditorial : faire chou blanc rate la cible, faire d'une pierre deux coups en atteint deux. Les deux locutions évaluent l'efficacité d'un geste." },
+
+    { "from": "faire mouche", "to": "faire d'une pierre deux coups", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'une action atteint son but, l'une par la précision, l'autre par l'économie de moyens." },
+
+    { "from": "avoir le compas dans l'œil", "to": "faire mouche", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent une justesse d'appréciation, l'une dans l'estimation, l'autre dans l'effet produit." },
+    { "from": "avoir le compas dans l'œil", "to": "avoir un poil dans la main", "type": "contrast", "rationale": "Rapprochement éditorial : les deux locutions parlent du corps au travail, l'une pour louer l'adresse, l'autre pour moquer la paresse." },
+
+    { "from": "avoir un poil dans la main", "to": "baisser les bras", "type": "sameContext", "rationale": "Rapprochement éditorial : les deux locutions disent qu'un effort n'est pas fourni, l'une par tempérament, l'autre par découragement." },
+    { "from": "avoir un poil dans la main", "to": "prendre son courage à deux mains", "type": "contrast", "rationale": "Rapprochement éditorial : l'une installe l'inaction, l'autre la rompt. Les deux locutions décrivent le rapport d'une personne à l'effort à fournir." },
+
+    { "from": "baisser les bras", "to": "prendre son courage à deux mains", "type": "contrast", "rationale": "Rapprochement éditorial : baisser les bras abandonne, prendre son courage à deux mains s'engage. Les deux locutions marquent un moment de décision devant une difficulté." }
+  ]
+}

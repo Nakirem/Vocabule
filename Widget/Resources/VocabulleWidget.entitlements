@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Exactement le même groupe que l'application : c'est la seule raison
+	     pour laquelle l'extension et l'application peuvent lire le même
+	     state.json et donc afficher le même terme. Un identifiant différent
+	     ici produirait deux conteneurs distincts et deux tirages divergents.
+	     L'extension doit rester utilisable si l'entitlement est refusé : elle
+	     recalcule alors le tirage nominal du créneau, qui ne dépend d'aucun
+	     état utilisateur. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.fr.vocabulle.app</string>
+	</array>
+</dict>
+</plist>
