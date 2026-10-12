@@ -31,6 +31,40 @@ public enum CorpusStoreError: Error, CustomStringConvertible {
     }
 }
 
+/// Liste de colonnes SQL dont l'ordre de déclaration est l'unique source de
+/// vérité.
+///
+/// # Pourquoi cette indirection
+///
+/// La liste passée à `SELECT` et les indices lus dans la ligne de résultat
+/// décrivent le même ordre. Écrites séparément, ces deux déclarations finissent
+/// par diverger — et c'est exactement ce qui est arrivé : `decodeEntry` lisait
+/// `short_definition` en croyant lire `registers`, et son dernier indice
+/// désignait une colonne qui n'existe pas. Le décodage échouait alors pour
+/// **toutes** les fiches, en annonçant du JSON invalide dans une colonne qui
+/// contenait du JSON parfaitement valide.
+///
+/// En dérivant la clause SQL et les indices de `allCases`, un décalage devient
+/// impossible : il n'existe plus qu'une liste, et elle est ordonnée.
+private protocol ColumnList: CaseIterable, Hashable {
+    var rawValue: String { get }
+}
+
+private extension ColumnList {
+    /// Clause de sélection, dans l'ordre de déclaration.
+    static var sqlList: String {
+        allCases.map(\.rawValue).joined(separator: ", ")
+    }
+
+    /// Position de la colonne dans la ligne de résultat.
+    var index: Int32 {
+        guard let position = Self.allCases.firstIndex(of: self) else {
+            preconditionFailure("Colonne « \(rawValue) » absente de sa propre liste")
+        }
+        return Int32(position)
+    }
+}
+
 /// Corpus lexical adossé à une base SQLite embarquée.
 ///
 /// # Pourquoi SQLite et pas un JSON
@@ -131,7 +165,7 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
     }
 
     public func entry(withID id: EntryID) throws -> LexicalEntry? {
-        let sql = "SELECT \(Self.entryColumns) FROM entries WHERE id = ? LIMIT 1;"
+        let sql = "SELECT \(EntryColumn.sqlList) FROM entries WHERE id = ? LIMIT 1;"
         return try withStatement(sql) { statement in
             bind(statement, 1, id.rawValue)
             guard sqlite3_step(statement) == SQLITE_ROW else { return nil }
@@ -141,8 +175,7 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
 
     public func summary(withID id: EntryID) throws -> EntrySummary? {
         let sql = """
-        SELECT id, term, kind, category, short_definition, difficulty,
-               grammar_part, grammar_gender, grammar_note, registers
+        SELECT \(SummaryColumn.sqlList)
         FROM entries WHERE id = ? LIMIT 1;
         """
         return try withStatement(sql) { statement in
@@ -161,8 +194,7 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
         for chunk in ids.chunked(maxSize: Self.maxBindVariables) {
             let placeholders = Array(repeating: "?", count: chunk.count).joined(separator: ", ")
             let sql = """
-            SELECT id, term, kind, category, short_definition, difficulty,
-                   grammar_part, grammar_gender, grammar_note, registers
+            SELECT \(SummaryColumn.sqlList)
             FROM entries WHERE id IN (\(placeholders));
             """
             try withStatement(sql) { statement in
@@ -228,8 +260,7 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
         let conditions = Array(repeating: "search_text LIKE ?", count: terms.count).joined(separator: " AND ")
         let normalizedQuery = SearchNormalizer.normalize(query)
         let sql = """
-        SELECT id, term, kind, category, short_definition, difficulty,
-               grammar_part, grammar_gender, grammar_note, registers
+        SELECT \(SummaryColumn.sqlList)
         FROM entries
         WHERE \(conditions)
         ORDER BY CASE WHEN term_search LIKE ? THEN 0 ELSE 1 END, length(term) ASC, id ASC
@@ -255,8 +286,7 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
     public func summaries(category: EntryCategory?, limit: Int, offset: Int) throws -> [EntrySummary] {
         guard limit > 0, offset >= 0 else { return [] }
         var sql = """
-        SELECT id, term, kind, category, short_definition, difficulty,
-               grammar_part, grammar_gender, grammar_note, registers
+        SELECT \(SummaryColumn.sqlList)
         FROM entries
         """
         if category != nil { sql += " WHERE category = ?" }
@@ -287,92 +317,146 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
 
     // MARK: - Colonnes
 
-    private static let entryColumns = """
-    id, term, kind, category, difficulty, grammar_part, grammar_gender, grammar_note, grammar_ipa,
-    registers, short_definition, short_provenance, long_definition, long_provenance,
-    usage_note, usage_note_provenance, etymology, etymology_provenance, history, history_provenance,
-    examples, relations, sources, tags
-    """
+    /// Requête complète, pour lire une fiche entière.
+    ///
+    /// L'ordre de ces cas **est** l'ordre de la clause `SELECT`. Ne jamais
+    /// réordonner sans vérifier les décodeurs : ils s'y réfèrent par nom, donc
+    /// ils suivent tout seuls.
+    private enum EntryColumn: String, CaseIterable, ColumnList {
+        case id, term, kind, category, difficulty
+        case grammarPart = "grammar_part"
+        case grammarGender = "grammar_gender"
+        case grammarNote = "grammar_note"
+        case grammarIPA = "grammar_ipa"
+        case registers
+        case shortDefinition = "short_definition"
+        case shortProvenance = "short_provenance"
+        case longDefinition = "long_definition"
+        case longProvenance = "long_provenance"
+        case usageNote = "usage_note"
+        case usageNoteProvenance = "usage_note_provenance"
+        case etymology
+        case etymologyProvenance = "etymology_provenance"
+        case history
+        case historyProvenance = "history_provenance"
+        case examples, relations, sources, tags
+    }
+
+    /// Requête allégée, pour les lignes de liste.
+    ///
+    /// Volontairement plus courte que `EntryColumn` : l'extension widget a un
+    /// budget mémoire serré et n'affiche jamais la définition longue ni les
+    /// relations. Attention, l'ordre **diffère** de `EntryColumn` — c'est
+    /// précisément ce que cette énumération rend lisible.
+    private enum SummaryColumn: String, CaseIterable, ColumnList {
+        case id, term, kind, category
+        case shortDefinition = "short_definition"
+        case difficulty
+        case grammarPart = "grammar_part"
+        case grammarGender = "grammar_gender"
+        case grammarNote = "grammar_note"
+        case registers
+    }
 
     // MARK: - Décodage
 
     private func decodeSummary(_ statement: OpaquePointer) throws -> EntrySummary {
-        guard let rawID = text(statement, 0), let term = text(statement, 1) else {
-            throw CorpusStoreError.decodingFailed("id", underlying: "identifiant ou terme NULL")
+        typealias Column = SummaryColumn
+        guard let rawID = text(statement, Column.id), let term = text(statement, Column.term) else {
+            throw CorpusStoreError.decodingFailed(
+                Column.id.rawValue,
+                underlying: "identifiant ou terme NULL"
+            )
         }
-        let kind = EntryKind(rawValue: text(statement, 2) ?? "") ?? .word
-        let category = EntryCategory(rawValue: text(statement, 3) ?? "") ?? .literary
-        let registers = try decodeJSON([Register].self, from: text(statement, 9), column: "registers")
+        let kind = EntryKind(rawValue: text(statement, Column.kind) ?? "") ?? .word
+        let category = EntryCategory(rawValue: text(statement, Column.category) ?? "") ?? .literary
+        let registers = try decodeJSON([Register].self, from: statement, column: Column.registers)
         let grammar = GrammarInfo(
-            partOfSpeech: text(statement, 6).flatMap(PartOfSpeech.init(rawValue:)),
-            gender: text(statement, 7).flatMap(GrammaticalGender.init(rawValue:)),
-            numberOrNote: text(statement, 8)
+            partOfSpeech: text(statement, Column.grammarPart).flatMap(PartOfSpeech.init(rawValue:)),
+            gender: text(statement, Column.grammarGender).flatMap(GrammaticalGender.init(rawValue:)),
+            numberOrNote: text(statement, Column.grammarNote)
         )
         return EntrySummary(
             id: EntryID(rawID),
             term: term,
             kind: kind,
             category: category,
-            shortDefinition: text(statement, 4) ?? "",
+            shortDefinition: text(statement, Column.shortDefinition) ?? "",
             compactGrammar: grammar.compactLabel,
             registerLabel: registers.isEmpty ? nil : registers.map(\.displayName).joined(separator: ", "),
             registerWarning: registers.contains(where: \.needsWarning),
-            difficulty: Int(sqlite3_column_int(statement, 5))
+            difficulty: integer(statement, Column.difficulty)
         )
     }
 
     private func decodeEntry(_ statement: OpaquePointer) throws -> LexicalEntry {
-        guard let rawID = text(statement, 0), let term = text(statement, 1) else {
-            throw CorpusStoreError.decodingFailed("id", underlying: "identifiant ou terme NULL")
+        typealias Column = EntryColumn
+        guard let rawID = text(statement, Column.id), let term = text(statement, Column.term) else {
+            throw CorpusStoreError.decodingFailed(
+                Column.id.rawValue,
+                underlying: "identifiant ou terme NULL"
+            )
         }
         let grammar = GrammarInfo(
-            partOfSpeech: text(statement, 5).flatMap(PartOfSpeech.init(rawValue:)),
-            gender: text(statement, 6).flatMap(GrammaticalGender.init(rawValue:)),
-            numberOrNote: text(statement, 7),
-            ipa: text(statement, 8)
+            partOfSpeech: text(statement, Column.grammarPart).flatMap(PartOfSpeech.init(rawValue:)),
+            gender: text(statement, Column.grammarGender).flatMap(GrammaticalGender.init(rawValue:)),
+            numberOrNote: text(statement, Column.grammarNote),
+            ipa: text(statement, Column.grammarIPA)
         )
         return LexicalEntry(
             id: EntryID(rawID),
             term: term,
-            kind: EntryKind(rawValue: text(statement, 2) ?? "") ?? .word,
-            category: EntryCategory(rawValue: text(statement, 3) ?? "") ?? .literary,
+            kind: EntryKind(rawValue: text(statement, Column.kind) ?? "") ?? .word,
+            category: EntryCategory(rawValue: text(statement, Column.category) ?? "") ?? .literary,
             grammar: grammar,
-            registers: try decodeJSON([Register].self, from: text(statement, 10), column: "registers"),
-            difficulty: Int(sqlite3_column_int(statement, 4)),
-            shortDefinition: try decodeText(statement, value: 11, provenance: 12, column: "short_definition"),
-            longDefinition: try decodeText(statement, value: 13, provenance: 14, column: "long_definition"),
-            usageNote: try decodeOptionalText(statement, value: 15, provenance: 16, column: "usage_note"),
-            etymology: try decodeOptionalText(statement, value: 17, provenance: 18, column: "etymology"),
-            history: try decodeOptionalText(statement, value: 19, provenance: 20, column: "history"),
-            examples: try decodeJSON([Example].self, from: text(statement, 21), column: "examples"),
-            relations: try decodeJSON([LexicalRelation].self, from: text(statement, 22), column: "relations"),
-            sources: try decodeJSON([SourceRef].self, from: text(statement, 23), column: "sources"),
-            tags: try decodeJSON([String].self, from: text(statement, 24), column: "tags")
+            registers: try decodeJSON([Register].self, from: statement, column: Column.registers),
+            difficulty: integer(statement, Column.difficulty),
+            shortDefinition: try decodeText(statement, value: .shortDefinition, provenance: .shortProvenance),
+            longDefinition: try decodeText(statement, value: .longDefinition, provenance: .longProvenance),
+            usageNote: try decodeOptionalText(statement, value: .usageNote, provenance: .usageNoteProvenance),
+            etymology: try decodeOptionalText(statement, value: .etymology, provenance: .etymologyProvenance),
+            history: try decodeOptionalText(statement, value: .history, provenance: .historyProvenance),
+            examples: try decodeJSON([Example].self, from: statement, column: Column.examples),
+            relations: try decodeJSON([LexicalRelation].self, from: statement, column: Column.relations),
+            sources: try decodeJSON([SourceRef].self, from: statement, column: Column.sources),
+            tags: try decodeJSON([String].self, from: statement, column: Column.tags)
         )
     }
 
     private func decodeText(
         _ statement: OpaquePointer,
-        value: Int32,
-        provenance: Int32,
-        column: String
+        value valueColumn: EntryColumn,
+        provenance provenanceColumn: EntryColumn
     ) throws -> EntryText {
-        guard let value = text(statement, value) else {
-            throw CorpusStoreError.decodingFailed(column, underlying: "texte NULL")
+        guard let value = text(statement, valueColumn) else {
+            throw CorpusStoreError.decodingFailed(valueColumn.rawValue, underlying: "texte NULL")
         }
-        let raw = text(statement, provenance) ?? FieldProvenance.editorial.rawValue
+        let raw = text(statement, provenanceColumn) ?? FieldProvenance.editorial.rawValue
         return EntryText(value, provenance: FieldProvenance(rawValue: raw) ?? .editorial)
     }
 
     private func decodeOptionalText(
         _ statement: OpaquePointer,
-        value: Int32,
-        provenance: Int32,
-        column: String
+        value valueColumn: EntryColumn,
+        provenance provenanceColumn: EntryColumn
     ) throws -> EntryText? {
-        guard let value = text(statement, value), !value.isEmpty else { return nil }
-        let raw = text(statement, provenance) ?? FieldProvenance.editorial.rawValue
+        guard let value = text(statement, valueColumn), !value.isEmpty else { return nil }
+        let raw = text(statement, provenanceColumn) ?? FieldProvenance.editorial.rawValue
         return EntryText(value, provenance: FieldProvenance(rawValue: raw) ?? .editorial)
+    }
+
+    /// Lit une colonne JSON et la décode.
+    ///
+    /// Le nom servant au message d'erreur est dérivé du cas d'énumération,
+    /// jamais réécrit à la main : un message qui désignerait une autre colonne
+    /// que celle réellement lue enverrait la recherche au mauvais endroit —
+    /// exactement ce qui s'est produit avec `registers`.
+    private func decodeJSON<T: Decodable, C: ColumnList>(
+        _ type: T.Type,
+        from statement: OpaquePointer,
+        column: C
+    ) throws -> T {
+        try decodeJSON(type, from: text(statement, column), column: column.rawValue)
     }
 
     private func decodeJSON<T: Decodable>(_ type: T.Type, from raw: String?, column: String) throws -> T {
@@ -422,6 +506,19 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
         }
         defer { sqlite3_finalize(prepared) }
         return try body(prepared)
+    }
+
+    /// Lecture d'une colonne désignée par son nom.
+    ///
+    /// Seul point d'entrée des décodeurs : ils ne manipulent jamais d'indice
+    /// numérique, donc ils ne peuvent pas se désynchroniser de la clause
+    /// `SELECT`.
+    private func text<C: ColumnList>(_ statement: OpaquePointer, _ column: C) -> String? {
+        text(statement, column.index)
+    }
+
+    private func integer<C: ColumnList>(_ statement: OpaquePointer, _ column: C) -> Int {
+        Int(sqlite3_column_int(statement, column.index))
     }
 
     private func bind(_ statement: OpaquePointer, _ index: Int32, _ value: String) {

@@ -212,10 +212,14 @@ final class SlotResolverTests: XCTestCase {
         let now = ParisTime.instant(2026, 10, 13, 3, 0)
         let upcoming = paris.upcomingStartDates(after: now, count: 3)
 
+        // Le 13 octobre 2026, Paris est encore à UTC+2 : le changement d'heure
+        // n'a lieu que le 25. Les créneaux de 08:00, 14:00 et 20:00 heure de
+        // Paris tombent donc à 06:00, 12:00 et 18:00 UTC. Écrire 07:00 ici
+        // reviendrait à attendre une heure d'hiver pour une date d'été.
         XCTAssertEqual(upcoming, [
-            UTCTime.instant(2026, 10, 13, 7, 0),
-            UTCTime.instant(2026, 10, 13, 13, 0),
-            UTCTime.instant(2026, 10, 13, 19, 0)
+            UTCTime.instant(2026, 10, 13, 6, 0),
+            UTCTime.instant(2026, 10, 13, 12, 0),
+            UTCTime.instant(2026, 10, 13, 18, 0)
         ])
         for date in upcoming {
             XCTAssertGreaterThan(date, now)
