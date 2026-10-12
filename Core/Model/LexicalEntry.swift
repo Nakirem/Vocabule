@@ -203,21 +203,33 @@ public struct Example: Codable, Hashable, Sendable {
         self.sourceTitle = sourceTitle
     }
 
-    /// Mention affichée sous l'exemple.
-    public var creditLine: String {
-        if let attributedTo, !attributedTo.isEmpty {
-            return "\(origin.attribution ?? "") — \(attributedTo)"
-        }
-        return origin.attribution ?? ""
+    /// Nom affichable de la provenance : l'auteur s'il est nommé, sinon l'ouvrage.
+    ///
+    /// Le Wiktionnaire cite souvent un ouvrage sans nommer d'auteur — « Zeste de
+    /// Savoir », « Journal du siège d'Andrinople ». Ces mentions sont des
+    /// provenances à part entière : les taire reviendrait à publier un exemple
+    /// dont on cache la source.
+    public var creditName: String? {
+        if let attributedTo, !attributedTo.isEmpty { return attributedTo }
+        if let sourceTitle, !sourceTitle.isEmpty { return sourceTitle }
+        return nil
     }
 
-    /// `true` si l'exemple prétend venir d'une source sans nommer d'auteur.
+    /// Mention affichée sous l'exemple.
+    public var creditLine: String {
+        guard let name = creditName else { return origin.attribution ?? "" }
+        return "\(origin.attribution ?? "") — \(name)"
+    }
+
+    /// `true` si l'exemple vient d'une source qui ne nomme **ni auteur ni ouvrage**.
     ///
-    /// Sert au rapport de validation : un exemple attribué sans nom d'auteur
-    /// exploitable est un défaut de la chaîne de production, pas un détail.
+    /// Ce qui est proscrit, c'est l'attribution inventée, pas l'absence de nom de
+    /// personne. Exiger un auteur écarterait 225 exemples parfaitement sourcés,
+    /// et contredirait la règle appliquée par la chaîne de production, qui
+    /// accepte un exemple dès qu'il nomme un auteur *ou* un ouvrage.
     public var hasUnverifiableAttribution: Bool {
         guard origin != .vocabulle else { return false }
-        return attributedTo?.isEmpty ?? true
+        return creditName == nil
     }
 }
 

@@ -82,7 +82,8 @@ donc vérifiable même si la page a changé depuis.
 - **Inventer une source.** Une section sans source est supprimée, jamais
   complétée par une référence plausible mais fictive.
 - **Attribuer un exemple à un auteur que la source ne nomme pas.** Le champ
-  auteur reste vide, et l'exemple est présenté comme venant du Wiktionnaire.
+  auteur reste vide, et l'exemple est crédité du seul ouvrage que la source
+  nomme — ou du Wiktionnaire seul si elle n'en nomme aucun.
 - **Présenter un texte rédigé pour Vocabulle comme venant d'une source.**
 
 ---
@@ -111,12 +112,16 @@ et leur source. Vocabulle les reprend **tels que le Wiktionnaire les publie**,
 en conservant la mention d'auteur et de titre lorsqu'elle existe, et en limitant
 chaque citation à 400 caractères.
 
-Le crédit affiché sous l'exemple distingue deux cas :
+Le crédit affiché sous l'exemple reprend ce que la source nomme, dans cet ordre :
 
 - « Exemple issu du Wiktionnaire — Théophile Gautier » : la source nomme
   l'auteur, on le crédite.
-- « Exemple issu du Wiktionnaire » : la source ne nomme personne, on n'invente
-  pas d'attribution.
+- « Exemple issu du Wiktionnaire — Zeste de Savoir » : elle ne nomme personne
+  mais cite un ouvrage, on crédite l'ouvrage. C'est le cas de 225 des 686
+  exemples du corpus livré.
+- « Exemple issu du Wiktionnaire » : elle ne nomme ni auteur ni ouvrage.
+  Aucune fiche livrée n'est dans ce cas — et la règle de validation le refuse,
+  parce qu'un exemple sans provenance est une citation invérifiable.
 
 ---
 
