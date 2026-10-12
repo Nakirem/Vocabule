@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Déclaration honnête, pas déclaration minimale.
+	     Vocabulle ne collecte rien : pas de compte, pas de serveur, pas
+	     d'analyse, pas de publicité. Tout ce que l'utilisateur produit —
+	     favoris, termes marqués connus, historique de consultation — reste
+	     dans le conteneur local de l'application. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<!-- Aucune API à raison impérative n'est utilisée : l'état est un fichier
+	     JSON écrit dans le conteneur, pas dans UserDefaults ; aucune empreinte
+	     de démarrage système n'est lue ; aucun horodatage de fichier n'est
+	     consulté pour identifier l'appareil. Une liste vide est donc exacte.
+	     Si du code venait à lire UserDefaults ou systemUptime, cette liste
+	     devrait être complétée — sans quoi le manifeste deviendrait un
+	     faux-cul. -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>

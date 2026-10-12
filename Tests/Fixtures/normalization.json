@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "rationale": "Contrat de normalisation entre la chaîne de production Python et l'application Swift. Les deux implémentations doivent produire exactement ces chaînes. Si l'une dérive, la recherche cesse de trouver : « ephemere » ne trouverait plus « éphémère », et rien ne le signalerait — la colonne search_text est remplie en Python, la requête est normalisée en Swift. Ce fichier est lu par scripts/validate_corpus.py (côté Python) et par Tests/Core/TextNormalizationTests.swift (côté Swift). Les deux doivent passer, sinon la normalisation a divergé.",
+  "notes": [
+    "Les ligatures œ et æ ne sont PAS décomposées : ni String.folding(.diacriticInsensitive) en Swift, ni unicodedata.normalize('NFD') en Python ne les séparent. Les décomposer d'un seul côté créerait précisément la divergence que ce fichier surveille.",
+    "La ponctuation devient une espace, les espaces multiples sont réduits, et les extrémités sont rognées.",
+    "slug() est plus strict que normalize() : il exige de l'ASCII, donc œ devient un tiret. C'est lui qui produit les identifiants de fiche et les liens profonds."
+  ],
+  "normalize": [
+    { "input": "éphémère", "expected": "ephemere" },
+    { "input": "ÉPHÉMÈRE", "expected": "ephemere" },
+    { "input": "Éphémère", "expected": "ephemere" },
+    { "input": "monomaniaque", "expected": "monomaniaque" },
+    { "input": "faire florès", "expected": "faire flores" },
+    { "input": "nœud gordien", "expected": "nœud gordien" },
+    { "input": "cœur", "expected": "cœur" },
+    { "input": "aître", "expected": "aitre" },
+    { "input": "ça", "expected": "ca" },
+    { "input": "où", "expected": "ou" },
+    { "input": "naïf", "expected": "naif" },
+    { "input": "ambiguë", "expected": "ambigue" },
+    { "input": "  espaces   multiples  ", "expected": "espaces multiples" },
+    { "input": "trait-d'union", "expected": "trait d union" },
+    { "input": "ponctuation !?,;:", "expected": "ponctuation" },
+    { "input": "« guillemets »", "expected": "guillemets" },
+    { "input": "apostrophe’typographique", "expected": "apostrophe typographique" },
+    { "input": "chiffres 2026", "expected": "chiffres 2026" },
+    { "input": "", "expected": "" },
+    { "input": "...", "expected": "" }
+  ],
+  "slug": [
+    { "input": "éphémère", "expected": "ephemere" },
+    { "input": "monomaniaque", "expected": "monomaniaque" },
+    { "input": "faire florès", "expected": "faire-flores" },
+    { "input": "victoire à la Pyrrhus", "expected": "victoire-a-la-pyrrhus" },
+    { "input": "talon d'Achille", "expected": "talon-d-achille" },
+    { "input": "nœud gordien", "expected": "n-ud-gordien" },
+    { "input": "être aux abois", "expected": "etre-aux-abois" },
+    { "input": "aller à vau-l'eau", "expected": "aller-a-vau-l-eau" },
+    { "input": "syllogisme", "expected": "syllogisme" }
+  ]
+}

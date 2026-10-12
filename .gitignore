@@ -1,0 +1,28 @@
+# Artefacts de construction Xcode.
+build/
+DerivedData/
+*.xcarchive
+*.xcresult
+dist/
+
+# Cache de production du corpus.
+#
+# Il peut atteindre 200 Mo et ne sert qu'à éviter de redemander une page déjà
+# récupérée. Le corpus produit (`Resources/vocabulle-corpus.sqlite`), lui, est
+# versionné : c'est un livrable, pas un artefact de construction.
+tools/corpus/.cache/
+tools/corpus/__pycache__/
+__pycache__/
+*.py[cod]
+
+# Système et éditeurs.
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
+
+# Métadonnées ajoutées par Windows lors du transfert de fichiers.
+# La copie du cahier des charges en porte une : elle n'a rien à faire dans le
+# dépôt et fausse les recherches de texte.
+*:Zone.Identifier

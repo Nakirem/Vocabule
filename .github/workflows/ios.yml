@@ -1,0 +1,269 @@
+name: Vocabulle — tests, IPA non signée et validation
+
+# Déclenchement manuel et à chaque modification de code.
+# Volontairement AUCUN déclenchement planifié : le projet n'a pas besoin d'être
+# reconstruit trois fois par jour, et cela consommerait des minutes macOS pour
+# rien.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+# Permissions minimales : ce workflow ne fait que lire le dépôt.
+# Il ne publie rien, ne commite rien, et n'a accès à aucun secret Apple.
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SCHEME: Vocabulle
+  APP_NAME: Vocabulle
+  WIDGET_NAME: VocabulleWidget
+
+jobs:
+  ipa:
+    name: Tests, archive non signée et IPA
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+        with:
+          # Aucun identifiant n'est conservé : le workflow n'écrit pas dans le
+          # dépôt.
+          persist-credentials: false
+
+      # Les versions sont imprimées dans les journaux : sans cela, un échec dû
+      # à un changement d'image de runner serait indiagnosticable.
+      - name: Versions de la chaîne d'outils
+        run: |
+          echo "=== Runner ==="
+          sw_vers
+          uname -m
+          echo "=== Xcode ==="
+          xcode-select -p
+          xcodebuild -version
+          echo "=== SDK disponibles ==="
+          xcodebuild -showsdks
+          echo "=== Swift ==="
+          swift --version
+          echo "=== Python ==="
+          python3 --version
+
+      # --- Logique pure, compilée et testée sur macOS -------------------------
+      # C'est ici que passent les risques réels du projet : créneaux horaires,
+      # passage de minuit, changements d'heure, sélection déterministe, actions
+      # périmées, écritures concurrentes. Ces tests ne demandent ni simulateur
+      # ni iPhone, donc ils tournent en quelques secondes.
+      - name: Tests de la logique (macOS)
+        run: swift test
+
+      - name: Validation de la structure du projet
+        run: python3 scripts/validate_project.py
+
+      # Le corpus est un artefact versionné, pas un fichier produit par la CI :
+      # le reconstruire ici exigerait un accès réseau et rendrait les builds
+      # non reproductibles. On vérifie donc celui qui est livré — en
+      # particulier que ses colonnes JSON portent exactement les clés que
+      # `JSONDecoder` attend. Une divergence de nom de clé produit un corpus
+      # parfaitement valide que l'application ne sait pas lire.
+      - name: Validation du corpus
+        run: python3 scripts/validate_corpus.py
+
+      - name: Tests du script d'empaquetage
+        run: python3 -m unittest discover -s scripts/tests -t . -v
+
+      # --- Compilation et tests sur simulateur --------------------------------
+      - name: Choisir un simulateur iPhone disponible
+        run: |
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for k,v in d["devices"].items() if "iOS" in k for x in v if "iPhone" in x["name"]))')
+          echo "Simulateur retenu : $DEVICE_ID"
+          echo "DEVICE_ID=$DEVICE_ID" >> "$GITHUB_ENV"
+
+      - name: Compiler et tester sur simulateur
+        run: |
+          xcodebuild test \
+            -project "$APP_NAME.xcodeproj" \
+            -scheme "$SCHEME" \
+            -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+
+      # --- Archive non signée pour iphoneos/arm64 -----------------------------
+      # La signature est entièrement désactivée : c'est AltStore qui re-signera
+      # l'IPA sur l'iPhone avec le compte Apple de l'utilisateur. Aucune clé,
+      # aucun certificat et aucun identifiant d'équipe n'intervient ici.
+      - name: Archiver l'application (non signée)
+        if: github.event_name != 'pull_request'
+        run: |
+          xcodebuild archive \
+            -project "$APP_NAME.xcodeproj" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "build/$APP_NAME.xcarchive" \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
+
+      # --- Vérifications de l'archive -----------------------------------------
+      # L'extension widget est centrale dans Vocabulle. Si elle disparaît de
+      # l'archive, l'IPA ne sert à rien : on échoue ici, bruyamment, plutôt que
+      # de livrer une application sans écran verrouillé. Il est explicitement
+      # interdit de contourner un échec de build en supprimant l'extension.
+      - name: Vérifier l'archive et l'extension widget
+        if: github.event_name != 'pull_request'
+        run: |
+          APP="build/$APP_NAME.xcarchive/Products/Applications/$APP_NAME.app"
+          echo "=== Contenu de l'application ==="
+          ls -la "$APP"
+
+          echo "=== Info.plist ==="
+          plutil -lint "$APP/Info.plist"
+          plutil -p "$APP/Info.plist" | grep -E 'CFBundleIdentifier|CFBundleShortVersionString|CFBundleVersion|MinimumOSVersion' || true
+
+          echo "=== Extension widget ==="
+          APPEX_COUNT=$(find "$APP/PlugIns" -maxdepth 1 -name '*.appex' 2>/dev/null | wc -l | tr -d ' ')
+          find "$APP/PlugIns" -maxdepth 1 -name '*.appex' -print 2>/dev/null || true
+          if [ "$APPEX_COUNT" -lt 1 ]; then
+            echo "::error::Aucune extension .appex dans $APP/PlugIns — le widget est absent de l'archive."
+            exit 1
+          fi
+          WIDGET="$APP/PlugIns/$WIDGET_NAME.appex"
+          if [ ! -d "$WIDGET" ]; then
+            echo "::error::Extension attendue absente : $WIDGET"
+            exit 1
+          fi
+          plutil -lint "$WIDGET/Info.plist"
+
+          # Le corpus doit être présent dans les DEUX bundles. Dans un seul,
+          # l'autre cible afficherait « corpus inaccessible » — une panne qui
+          # n'apparaîtrait qu'à l'installation, sur l'écran verrouillé.
+          echo "=== Corpus embarqué ==="
+          for BUNDLE in "$APP" "$WIDGET"; do
+            CORPUS="$BUNDLE/vocabulle-corpus.sqlite"
+            if [ ! -f "$CORPUS" ]; then
+              echo "::error::Corpus absent de $BUNDLE — cette cible ne pourra afficher aucun mot."
+              exit 1
+            fi
+            ls -la "$CORPUS"
+          done
+
+          echo "=== Architectures ==="
+          lipo -info "$APP/$APP_NAME"
+          lipo -info "$WIDGET/$WIDGET_NAME"
+          # Cette commande échoue si arm64 est absent : c'est le point clé d'un
+          # build destiné à un iPhone réel, et non au simulateur.
+          xcrun lipo "$APP/$APP_NAME" -verify_arch arm64
+          xcrun lipo "$WIDGET/$WIDGET_NAME" -verify_arch arm64
+
+          echo "=== Signature (doit être absente) ==="
+          codesign -dv --verbose=4 "$APP" 2>&1 || true
+          echo "=== Profil de provisionnement (doit être absent) ==="
+          find "$APP" -name embedded.mobileprovision -print
+          FOUND=$(find "$APP" -name embedded.mobileprovision | wc -l | tr -d ' ')
+          if [ "$FOUND" -ne 0 ]; then
+            echo "::error::Un profil de provisionnement est présent : le build n'est pas réellement non signé."
+            exit 1
+          fi
+
+      # --- Empaquetage IPA ----------------------------------------------------
+      - name: Empaqueter l'IPA (Payload/Vocabulle.app)
+        if: github.event_name != 'pull_request'
+        run: |
+          python3 scripts/package_ipa.py \
+            --app "build/$APP_NAME.xcarchive/Products/Applications/$APP_NAME.app" \
+            --output "dist/$APP_NAME-unsigned.ipa"
+
+      # --- Vérifications de l'IPA ---------------------------------------------
+      # Un IPA refusé par AltStore l'est presque toujours pour une raison de
+      # forme : mauvaise racine, entrées AppleDouble, extension manquante. On
+      # vérifie tout cela ici, où l'erreur est lisible.
+      - name: Vérifier l'IPA
+        if: github.event_name != 'pull_request'
+        run: |
+          IPA="dist/$APP_NAME-unsigned.ipa"
+          ls -la "$IPA"
+          echo "=== Racine de l'archive ==="
+          unzip -l "$IPA" | head -30
+
+          if ! unzip -l "$IPA" | grep -q "Payload/$APP_NAME.app/"; then
+            echo "::error::Racine incorrecte : Payload/$APP_NAME.app est absent de l'IPA."
+            exit 1
+          fi
+          if unzip -l "$IPA" | grep -qE '__MACOSX|/\._'; then
+            echo "::error::Entrées AppleDouble (__MACOSX ou ._) détectées : AltStore refusera l'IPA."
+            exit 1
+          fi
+          if ! unzip -l "$IPA" | grep -q "Payload/$APP_NAME.app/PlugIns/$WIDGET_NAME.appex/"; then
+            echo "::error::L'extension widget est absente de l'IPA."
+            exit 1
+          fi
+          for BUNDLE in "Payload/$APP_NAME.app" "Payload/$APP_NAME.app/PlugIns/$WIDGET_NAME.appex"; do
+            if ! unzip -l "$IPA" | grep -q "$BUNDLE/vocabulle-corpus.sqlite"; then
+              echo "::error::Corpus absent de $BUNDLE dans l'IPA."
+              exit 1
+            fi
+          done
+          echo "IPA conforme."
+
+      # --- Publication --------------------------------------------------------
+      - name: Publier l'IPA en artefact téléchargeable
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-IPA-${{ github.run_number }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publier le rapport de tests
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-rapport-tests
+          path: TestResults.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Publier la journalisation de construction
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-journaux
+          path: |
+            build/DerivedData/Logs/**
+            build/*.xcarchive/Info.plist
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Résumé de l'exécution
+        if: always()
+        run: |
+          {
+            echo "## Vocabulle — résultat"
+            echo ""
+            if [ "${{ job.status }}" = "success" ] && [ "${{ github.event_name }}" != "pull_request" ]; then
+              echo "Tests et compilation réussis. L'IPA non signée est disponible dans l'artefact **$APP_NAME-IPA-${{ github.run_number }}**."
+              echo ""
+              echo "1. Téléchargez l'artefact et extrayez le ZIP fourni par GitHub."
+              echo "2. Ouvrez **$APP_NAME-unsigned.ipa** dans AltStore Classic sur l'iPhone."
+              echo "3. Au moment de l'installation, AltStore peut proposer de retirer les extensions :"
+              echo "   choisissez impérativement **Keep App Extensions**. Sans elle, il n'y a pas de widget."
+              echo "4. Compte Apple gratuit : la signature expire au bout de 7 jours."
+              echo ""
+              echo "Aucun identifiant Apple n'est utilisé dans cette CI."
+            else
+              echo "Consultez les journaux des étapes en échec ci-dessus."
+            fi
+            echo ""
+            echo "L'installation sur l'iPhone réel et le comportement de l'écran verrouillé restent à vérifier manuellement (voir docs/VALIDATION_MANUELLE.md)."
+          } >> "$GITHUB_STEP_SUMMARY"
