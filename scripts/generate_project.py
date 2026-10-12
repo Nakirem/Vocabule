@@ -5,14 +5,21 @@ main, ce qui permet de le régénérer à l'identique en local comme en CI.
 
 Trois cibles :
 
-- ``Vocabulle``          l'application (``App/`` + ``Core/``)
-- ``VocabulleWidget``    l'extension widget (``Widget/`` + ``Core/``)
+- ``Vocabulle``          l'application (``App/`` + ``Shared/`` + ``Core/``)
+- ``VocabulleWidget``    l'extension widget (``Widget/`` + ``Shared/`` + ``Core/``)
 - ``VocabulleTests``     tests XCTest hébergés par l'application (``Tests/iOS/``)
 
-``Core/`` est compilé dans les deux premières. C'est volontaire : l'application
-et l'extension exécutent alors littéralement le même code de sélection, ce que
-le cahier des charges exige. Dupliquer la logique dans deux cibles distinctes
-serait le seul moyen d'obtenir deux tirages divergents.
+``Core/`` et ``Shared/`` sont compilés dans les deux premières. C'est
+volontaire : l'application et l'extension exécutent alors littéralement le même
+code de sélection, ce que le cahier des charges exige. Dupliquer la logique dans
+deux cibles distinctes serait le seul moyen d'obtenir deux tirages divergents.
+
+Ce qui sépare les deux tient à UIKit. ``Shared/`` contient ce qui en a besoin —
+le thème, qui peint l'application comme l'écran verrouillé — et ``Core/`` reste
+du Foundation pur, compilable par ``swift test`` sur macOS, où UIKit n'existe
+pas. Ranger le thème dans ``Core/`` obligerait à le harnacher de ``#if`` ; le
+laisser dans ``App/`` l'a rendu invisible au widget, ce qui a cassé la
+compilation. ``Shared/`` est la troisième possibilité.
 
 Les tests SwiftPM de ``Tests/Core/`` sont délibérément absents de ce projet :
 ils font ``import VocabulleCore``, un module qui n'existe que pour SwiftPM, et
@@ -57,6 +64,7 @@ def relative(paths) -> list:
 def run() -> None:
     app_files = relative(list((ROOT / "App").rglob("*.swift")))
     core_files = relative(list((ROOT / "Core").rglob("*.swift")))
+    shared_files = relative(list((ROOT / "Shared").rglob("*.swift")))
     widget_files = relative(list((ROOT / "Widget").rglob("*.swift")))
     test_files = relative(list((ROOT / "Tests" / "iOS").rglob("*.swift")))
 
@@ -105,8 +113,8 @@ def run() -> None:
         return "text.plist.xml"
 
     sources = {
-        "app": app_files + core_files,
-        "widget": widget_files + core_files,
+        "app": app_files + shared_files + core_files,
+        "widget": widget_files + shared_files + core_files,
         "test": test_files,
     }
     resources = {"app": app_resources, "widget": widget_resources, "test": []}
@@ -299,6 +307,7 @@ def run() -> None:
     print(
         f"Projet Xcode régénéré : {len(app_files)} fichiers d'application, "
         f"{len(core_files)} fichiers de logique partagée, "
+        f"{len(shared_files)} fichiers partagés hors logique, "
         f"{len(widget_files)} fichiers de widget, {len(test_files)} fichiers de test iOS."
     )
 

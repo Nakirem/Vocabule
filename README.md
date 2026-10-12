@@ -42,6 +42,7 @@ Vocabulle/
 │   ├── Selection/ moteur de sélection déterministe
 │   ├── State/     état partagé, conteneur, écriture atomique
 │   └── Corpus/    lecture SQLite, normalisation de recherche
+├── Shared/        thème et constantes visuelles, compilés dans les deux aussi
 ├── App/           interface SwiftUI et environnement applicatif
 ├── Widget/        extension WidgetKit et App Intents
 ├── Resources/     corpus SQLite embarqué
@@ -51,11 +52,16 @@ Vocabulle/
 └── scripts/       génération du projet, validation, empaquetage
 ```
 
-**`Core/` est compilé dans les deux cibles.** C'est la garantie structurelle
-que l'application et l'extension exécutent littéralement le même moteur de
-sélection : elles ne peuvent pas diverger, parce qu'il n'existe qu'une seule
-implémentation. `scripts/validate_project.py` échoue si un fichier de `Core/`
-n'est compilé que dans une cible.
+**`Core/` et `Shared/` sont compilés dans les deux cibles.** C'est la garantie
+structurelle que l'application et l'extension exécutent littéralement le même
+moteur de sélection : elles ne peuvent pas diverger, parce qu'il n'existe qu'une
+seule implémentation. `scripts/validate_project.py` échoue si l'un de leurs
+fichiers n'est compilé que dans une cible.
+
+Ce qui sépare les deux tient à UIKit. `Shared/` porte ce qui en dépend — le
+thème, qui peint l'application comme l'écran verrouillé — tandis que `Core/`
+reste du Foundation pur, compilable par `swift test` sur macOS, où UIKit
+n'existe pas.
 
 Le projet Xcode est **généré** par `scripts/generate_project.py`, en Python pur
 et sans dépendance. Le fichier produit est versionné, et sa régénération est

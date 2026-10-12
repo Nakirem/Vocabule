@@ -112,22 +112,29 @@ def main() -> int:
         check((ROOT / path).exists(), f"Fichier déclaré introuvable : {path}")
 
     # 3. Aucun fichier source oublié hors du projet Xcode.
-    for folder in ["App", "Core", "Widget"]:
+    for folder in ["App", "Core", "Shared", "Widget"]:
         for path in (ROOT / folder).rglob("*.swift"):
             name = path.relative_to(ROOT).as_posix()
             check(name in project, f"Source absente du projet Xcode : {name}")
 
-    # Core/ doit être compilé par les DEUX cibles : c'est la garantie que
-    # l'application et l'extension exécutent littéralement le même moteur de
-    # sélection. Une seule cible signalerait une divergence silencieuse entre le
-    # terme de l'écran verrouillé et celui de l'application.
+    # Core/ et Shared/ doivent être compilés par les DEUX cibles : c'est la
+    # garantie que l'application et l'extension exécutent littéralement le même
+    # moteur de sélection. Une seule cible signalerait une divergence silencieuse
+    # entre le terme de l'écran verrouillé et celui de l'application.
+    #
+    # La règle couvre aussi Shared/ depuis une panne réelle : le thème vivait
+    # dans App/, le widget le référençait, et rien ne l'a signalé avant que
+    # xcodebuild ne s'en aperçoive — après le push, sur le seul compilateur
+    # disponible. Un fichier partagé rangé dans une seule cible est exactement
+    # ce que ce contrôle doit rendre impossible.
     compiled = target_files(project)
-    for path in (ROOT / "Core").rglob("*.swift"):
-        name = path.relative_to(ROOT).as_posix()
-        targets = compiled.get(name, set())
-        check({APP_NAME, WIDGET_NAME} <= targets,
-              f"{name} n'est pas compilé à la fois dans l'application et dans l'extension "
-              f"(cibles : {sorted(targets) or 'aucune'})")
+    for folder in ["Core", "Shared"]:
+        for path in (ROOT / folder).rglob("*.swift"):
+            name = path.relative_to(ROOT).as_posix()
+            targets = compiled.get(name, set())
+            check({APP_NAME, WIDGET_NAME} <= targets,
+                  f"{name} n'est pas compilé à la fois dans l'application et dans l'extension "
+                  f"(cibles : {sorted(targets) or 'aucune'})")
 
     # Le corpus doit être copié dans les DEUX bundles. Dans un seul, l'autre
     # cible ouvrirait une base absente et afficherait « corpus inaccessible » —
