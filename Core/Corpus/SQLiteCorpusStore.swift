@@ -57,11 +57,17 @@ private extension ColumnList {
     }
 
     /// Position de la colonne dans la ligne de résultat.
+    ///
+    /// Comptage explicite plutôt que `firstIndex(of:)` : celui-ci renvoie
+    /// `Self.AllCases.Index`, un type associé qui n'est pas convertible en
+    /// entier et que le compilateur refuse de voir comme une position.
     var index: Int32 {
-        guard let position = Self.allCases.firstIndex(of: self) else {
-            preconditionFailure("Colonne « \(rawValue) » absente de sa propre liste")
+        var position: Int32 = 0
+        for candidate in Self.allCases {
+            if candidate == self { return position }
+            position += 1
         }
-        return Int32(position)
+        preconditionFailure("Colonne « \(rawValue) » absente de sa propre liste")
     }
 }
 

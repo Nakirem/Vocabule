@@ -38,7 +38,15 @@ public enum UserStateStoreError: Error, CustomStringConvertible {
 /// 3. **Révision monotone** — chaque écriture incrémente `revision`. Un
 ///    écrivain qui constate que la révision a changé depuis sa lecture rejoue
 ///    la transformation sur l'état frais au lieu d'écraser la modification.
-public struct UserStateStore: Sendable {
+///
+/// La conformité à `Sendable` est **non vérifiée** : `FileManager` n'est pas
+/// déclaré `Sendable` par Foundation, le compilateur ne peut donc pas contrôler
+/// ce champ. La garantie est assurée autrement — `FileManager` est sans état
+/// pour les opérations utilisées ici, et la seule ressource réellement
+/// partagée, le fichier d'état, est protégée par la coordination et le
+/// remplacement atomique décrits ci-dessus. Même compromis que
+/// `SQLiteCorpusStore`.
+public struct UserStateStore: @unchecked Sendable {
     public let container: SharedContainer
     private let fileManager: FileManager
 
