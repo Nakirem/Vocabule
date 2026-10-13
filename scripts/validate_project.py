@@ -146,6 +146,26 @@ def main() -> int:
               f"{path} n'est pas copié dans les ressources de l'application ET de "
               f"l'extension (cibles : {sorted(names) or 'aucune'})")
 
+    # L'icône absente est un défaut silencieux : sans elle, tout compile,
+    # l'archive se fabrique, l'IPA s'installe — et l'application apparaît avec
+    # une icône blanche sur l'écran d'accueil. Ni Xcode ni l'empaqueteur ne
+    # s'en plaignent, et rien d'autre dans cette validation ne le verrait. Ce
+    # contrôle existe parce que le dépôt a réellement été livré ainsi : le jeu
+    # d'icônes déclarait un emplacement, sans nommer de fichier.
+    icon_set = ROOT / "App" / "Resources" / "Assets.xcassets" / "AppIcon.appiconset"
+    manifest = icon_set / "Contents.json"
+    if manifest.is_file():
+        images = json.loads(manifest.read_text(encoding="utf-8")).get("images", [])
+        named = [image for image in images if image.get("filename")]
+        check(bool(named),
+              "AppIcon.appiconset ne référence aucun fichier : l'application serait "
+              "construite avec une icône blanche, sans que rien ne le signale")
+        for image in named:
+            check((icon_set / image["filename"]).is_file(),
+                  f"Icône déclarée mais absente du dépôt : {image['filename']}")
+    else:
+        check(False, "AppIcon.appiconset/Contents.json est absent")
+
     for path in (ROOT / "Tests" / "iOS").rglob("*.swift"):
         name = path.relative_to(ROOT).as_posix()
         check(name in project, f"Test iOS absent du projet : {name}")
