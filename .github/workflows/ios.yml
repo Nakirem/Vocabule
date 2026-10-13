@@ -7,11 +7,16 @@ name: Vocabulle — tests, IPA non signée et validation
 on:
   push:
     branches: [main, master]
+    # Un tag « v1.2.3 » publie une version : c'est le seul déclencheur qui crée
+    # une Release et une source AltStore. Un simple envoi sur main compile et
+    # teste, sans rien publier.
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
-# Permissions minimales : ce workflow ne fait que lire le dépôt.
-# Il ne publie rien, ne commite rien, et n'a accès à aucun secret Apple.
+# Par défaut, permissions minimales : lire le dépôt.
+# Seul le travail « release », plus bas, demande l'écriture — et uniquement
+# pour créer la Release du tag. Aucun secret Apple n'intervient nulle part.
 permissions:
   contents: read
 
@@ -101,6 +106,17 @@ jobs:
       - name: Archiver l'application (non signée)
         if: github.event_name != 'pull_request'
         run: |
+          # Sur un tag, la version de commercialisation est celle du tag. Elle
+          # doit correspondre exactement au CFBundleShortVersionString de l'IPA,
+          # puisque la source AltStore l'annonce : le générateur de source
+          # refuse une divergence, mais autant que la valeur soit bonne dès ici.
+          # Sur un simple envoi sur main, la version du projet est conservée.
+          VERSION_SETTING=""
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            VERSION_SETTING="MARKETING_VERSION=${GITHUB_REF_NAME#v}"
+            echo "Version imposée par le tag : ${GITHUB_REF_NAME#v}"
+          fi
+
           xcodebuild archive \
             -project "$APP_NAME.xcodeproj" \
             -scheme "$SCHEME" \
@@ -112,7 +128,8 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
-            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER"
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            ${VERSION_SETTING:+"$VERSION_SETTING"}
 
       # --- Vérifications de l'archive -----------------------------------------
       # L'extension widget est centrale dans Vocabulle. Si elle disparaît de
@@ -264,6 +281,122 @@ jobs:
             else
               echo "Consultez les journaux des étapes en échec ci-dessus."
             fi
+            if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+              echo ""
+              echo "Tag **$GITHUB_REF_NAME** : le travail « release » publie l'IPA et la source AltStore."
+              echo ""
+              echo "Adresse stable à ajouter dans AltStore → Sources :"
+              echo ""
+              echo '```'
+              echo "https://github.com/$GITHUB_REPOSITORY/releases/latest/download/altstore.json"
+              echo '```'
+            fi
             echo ""
             echo "L'installation sur l'iPhone réel et le comportement de l'écran verrouillé restent à vérifier manuellement (voir docs/VALIDATION_MANUELLE.md)."
           } >> "$GITHUB_STEP_SUMMARY"
+
+  # --- Publication d'une version ---------------------------------------------
+  # Ne s'exécute que sur un tag « v* ». Il transforme l'artefact interne — que
+  # GitHub ne sert qu'aux personnes connectées — en une Release téléchargeable
+  # sans authentification, et produit la source AltStore qui la décrit.
+  #
+  # C'est le SEUL endroit du workflow qui écrit dans le dépôt, et il n'y écrit
+  # qu'une Release. La compilation reste en lecture seule.
+  release:
+    name: Publier la version et la source AltStore
+    needs: ipa
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Récupérer l'IPA produite
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.APP_NAME }}-IPA-${{ github.run_number }}
+          path: dist
+
+      # L'icône est jointe à la Release pour que la source soit complète : le
+      # champ `iconURL` est obligatoire, et une source dont l'icône serait
+      # introuvable serait refusée à l'ajout.
+      - name: Joindre l'icône
+        run: |
+          cp "App/Resources/Assets.xcassets/AppIcon.appiconset/Icon-1024.png" \
+             dist/icon-1024.png
+          ls -la dist/
+
+      # `--check-tag` exige que la version portée par l'IPA soit exactement
+      # celle du tag : sans ce contrôle, la source annoncerait une version que
+      # le binaire ne porte pas, et AltStore proposerait indéfiniment une mise
+      # à jour sans effet.
+      - name: Générer la source AltStore
+        run: |
+          python3 scripts/make_altstore_source.py \
+            --ipa "dist/$APP_NAME-unsigned.ipa" \
+            --tag "$GITHUB_REF_NAME" \
+            --repository "$GITHUB_REPOSITORY" \
+            --entitlements \
+              App/Resources/Vocabulle.entitlements \
+              Widget/Resources/VocabulleWidget.entitlements \
+            --icon dist/icon-1024.png \
+            --output dist/altstore.json \
+            --check-tag
+
+      - name: Publier la Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > RELEASE_NOTES.md <<'NOTES'
+          IPA non signée, à installer avec **AltStore Classic**.
+
+          Au moment de l'installation, choisissez **« Keep App Extensions »**.
+          Sans l'extension widget, il n'y a pas d'écran verrouillé — c'est-à-dire
+          pas d'application.
+
+          ### Source AltStore
+
+          Cette adresse est stable : elle sert toujours la version la plus
+          récente. À ajouter dans AltStore → Sources.
+
+          NOTES
+
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/latest/download/altstore.json" \
+            >> RELEASE_NOTES.md
+
+          cat >> RELEASE_NOTES.md <<'NOTES'
+
+          ### Ce qui n'a pas été vérifié
+
+          L'application n'a **jamais été ouverte sur un iPhone**. L'écran
+          verrouillé, le mode Always-On, le comportement après redémarrage et la
+          survie du groupe partagé à la re-signature AltStore restent à
+          contrôler : la liste est dans `docs/VALIDATION_MANUELLE.md`.
+
+          Avec un compte Apple gratuit, la signature expire au bout de sept jours
+          et doit être rafraîchie.
+          NOTES
+
+          ASSETS="dist/$APP_NAME-unsigned.ipa dist/altstore.json dist/icon-1024.png"
+
+          # Idempotent : relancer le workflow sur le même tag remplace les
+          # fichiers au lieu d'échouer sur une Release existante. C'est
+          # nécessaire parce que le numéro de construction est celui de
+          # l'exécution, et qu'une reprise doit rester possible.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            echo "Release $GITHUB_REF_NAME déjà présente : remplacement des fichiers."
+            gh release upload "$GITHUB_REF_NAME" $ASSETS --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" $ASSETS \
+              --title "$APP_NAME $GITHUB_REF_NAME" \
+              --notes-file RELEASE_NOTES.md
+          fi
+
+          echo "Release : https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME"

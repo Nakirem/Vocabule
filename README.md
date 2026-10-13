@@ -48,7 +48,9 @@ Vocabulle/
 ├── Resources/     corpus SQLite embarqué
 ├── Tests/Core/    tests SwiftPM (swift test)
 ├── Tests/iOS/     tests XCTest hébergés (xcodebuild test)
-├── tools/corpus/  chaîne de production du corpus (Python)
+├── tools/         outils d'auteur, hors chaîne de compilation
+│   ├── corpus/    chaîne de production du corpus (Python, accès réseau)
+│   └── make_icon.py  dessin de l'icône (Pillow, jamais lancé par la CI)
 └── scripts/       génération du projet, validation, empaquetage
 ```
 
@@ -156,8 +158,29 @@ un push). Il :
 8. produit `Vocabulle-unsigned.ipa` et le publie en artefact téléchargeable
    (14 jours).
 
-Aucune clé Apple, aucun certificat et aucun identifiant d'équipe n'intervient :
-le workflow n'a que la permission `contents: read`.
+Aucune clé Apple, aucun certificat et aucun identifiant d'équipe n'intervient.
+Le workflow lit le dépôt (`contents: read`) ; seul le travail qui publie une
+version, et lui seul, dispose de l'écriture — pour créer sa Release.
+
+### Publier une version
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Le tag déclenche la même compilation, puis crée une **Release** publique portant
+l'IPA et engendre la **source AltStore** qui la décrit. C'est ce qui permet
+d'installer Vocabulle — et de le mettre à jour — depuis AltStore, sans
+télécharger d'artefact à la main :
+
+```
+https://github.com/Nakirem/Vocabulle/releases/latest/download/altstore.json
+```
+
+Un envoi sur `main` sans tag compile et teste, mais ne publie rien. Le détail du
+mécanisme, ce qu'une source fait et ne fait pas, et **le point qui n'a pas pu
+être vérifié** sont dans **[docs/SOURCE_ALTSTORE.md](docs/SOURCE_ALTSTORE.md)**.
 
 ### Installer sur l'iPhone avec AltStore Classic
 

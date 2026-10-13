@@ -62,6 +62,15 @@ seule.
 divergents. L'écran verrouillé et l'application afficheraient alors deux termes
 différents à la même heure, ce qui est pire que l'absence d'action.
 
+**Un risque en découle, du côté de l'installation cette fois.** La source
+AltStore déclare les entitlements de l'application pour qu'AltStore puisse les
+comparer à ceux de l'IPA — c'est une exigence de son format, pas un choix. Or
+cette déclaration inclut `com.apple.security.application-groups`, que le profil
+gratuit ne fournit pas. Le détail, les deux signatures d'échec possibles et la
+correction en une ligne sont dans
+**[SOURCE_ALTSTORE.md](SOURCE_ALTSTORE.md)** §« Le point qui n'a pas pu être
+vérifié ».
+
 ## 3. Après un redémarrage de l'iPhone
 
 Les fichiers de l'application sont chiffrés tant que l'appareil n'a pas été
@@ -80,10 +89,13 @@ le fait que le tirage nominal donne le même terme dans le cas courant.
 Le corpus est un fichier SQLite embarqué dans le bundle. Il ne se met à jour
 que par une nouvelle version de l'application.
 
-**Conséquence :** avec 1 437 fiches, un utilisateur qui consulte trois
-découvertes par jour épuise le corpus en **environ 130 jours** s'il ne remplace
-jamais un terme. C'est un peu plus que les « 100 jours » visés par le cahier des
-charges, mais l'épuisement finit par arriver.
+**Conséquence :** le moteur applique la répartition 40/25/20/15 à chaque cycle
+de vingt créneaux, soit 8 fiches littéraires par cycle. Le littéraire — 434
+fiches sur 1 432 — est donc la catégorie qui s'épuise la première : au bout de
+**54 cycles**, soit 1 080 créneaux, ou **environ 360 jours** à trois découvertes
+par jour, pour un utilisateur qui ne remplace jamais un terme. C'est bien plus
+que les « 100 jours » visés par le cahier des charges, mais l'épuisement finit
+par arriver.
 
 **Ce qui est fait :** l'épuisement est **explicite**. L'application affiche
 « Vous avez parcouru les N termes du corpus », propose de recommencer un tour,
@@ -168,7 +180,7 @@ dictionnaire — ce que le cahier des charges interdit.
 n'affecte **pas** ce que voit l'utilisateur : le moteur de sélection applique la
 répartition 40/25/20/15 à chaque cycle de vingt créneaux, quelle que soit la
 composition du corpus. Ce qui compte est que chaque catégorie ait assez de
-fiches pour alimenter ces cycles, et c'est le cas (54 à 107 cycles par
+fiches pour alimenter ces cycles, et c'est le cas (54 à 108 cycles par
 catégorie).
 
 ## 10. Le format de l'état utilisateur

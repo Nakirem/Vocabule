@@ -5,6 +5,13 @@ DerivedData/
 *.xcresult
 dist/
 
+# Sorties locales de scripts/package_ipa.py, écrites à côté de l'IPA qu'il
+# produit. Anchées à la racine : le corpus livré s'appelle lui aussi
+# « vocabulle-… » et doit rester versionné.
+/Vocabulle-unsigned.ipa
+/Vocabulle-unsigned.ipa.sha256
+/Vocabulle-unsigned.json
+
 # Cache de production du corpus.
 #
 # Il peut atteindre 200 Mo et ne sert qu'à éviter de redemander une page déjà
