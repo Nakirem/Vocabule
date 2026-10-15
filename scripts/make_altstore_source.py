@@ -301,7 +301,7 @@ def main() -> int:
     parser.add_argument("--ipa", type=Path, required=True, help="IPA non signée produite")
     parser.add_argument("--tag", required=True, help="Tag publié, par exemple v1.0.0")
     parser.add_argument(
-        "--repository", required=True, help="Dépôt, par exemple Nakirem/Vocabulle"
+        "--repository", required=True, help="Dépôt, par exemple Nakirem/Vocabule"
     )
     parser.add_argument(
         "--entitlements",

@@ -130,7 +130,7 @@ def run_script(
     tag: str = "v1.0.0",
     icon: Path | None = None,
     check_tag: bool = False,
-    repository: str = "Nakirem/Vocabulle",
+    repository: str = "Nakirem/Vocabule",
 ) -> subprocess.CompletedProcess:
     """Exécute le script comme le ferait la CI, et renvoie le résultat brut."""
     command = [
@@ -231,12 +231,12 @@ class SourceGenerationTests(unittest.TestCase):
     def test_urls_are_https_and_pinned_to_the_repository_and_tag(self) -> None:
         self.assertEqual(
             self.version["downloadURL"],
-            "https://github.com/Nakirem/Vocabulle/releases/download/v1.0.0/"
+            "https://github.com/Nakirem/Vocabule/releases/download/v1.0.0/"
             + self.ipa.name,
         )
         self.assertEqual(
             self.app["iconURL"],
-            "https://github.com/Nakirem/Vocabulle/releases/download/v1.0.0/"
+            "https://github.com/Nakirem/Vocabule/releases/download/v1.0.0/"
             "icon-1024.png",
         )
 

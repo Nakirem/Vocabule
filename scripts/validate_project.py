@@ -10,6 +10,7 @@ from pathlib import Path
 import json
 import plistlib
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -166,6 +167,22 @@ def main() -> int:
     else:
         check(False, "AppIcon.appiconset/Contents.json est absent")
 
+    # Une URL de dépôt citée dans la documentation doit désigner le dépôt réel.
+    #
+    # Ce contrôle existe parce que la panne a eu lieu. La documentation
+    # annonçait `Nakirem/Vocabulle` — deux « l » — alors que le dépôt s'appelle
+    # `Nakirem/Vocabule`. Rien ne l'a signalé : l'adresse de la source AltStore
+    # renvoyait 404, AltStore refusait la source, et rien dans le dépôt ne
+    # permettait de comprendre pourquoi. Le nom du dossier, celui de
+    # l'application et celui du dépôt ne coïncident pas ici — aucune relecture
+    # ne peut le deviner, seul le remote le sait.
+    origin = origin_repository()
+    if origin:
+        for cited in sorted(documented_repositories()):
+            check(cited == origin,
+                  f"URL de dépôt citée dans la documentation : {cited} — "
+                  f"le dépôt est {origin}")
+
     for path in (ROOT / "Tests" / "iOS").rglob("*.swift"):
         name = path.relative_to(ROOT).as_posix()
         check(name in project, f"Test iOS absent du projet : {name}")
@@ -246,6 +263,46 @@ def main() -> int:
                     for p in (ROOT / "Tests" / "iOS").rglob("*.swift"))
     print(f"Tests déclarés : {swiftpm_tests} SwiftPM (swift test) + {ios_tests} XCTest iOS (xcodebuild test).")
     return report()
+
+
+def origin_repository() -> str | None:
+    """Le dépôt GitHub que ce checkout suit réellement, ou None.
+
+    Le remote est la seule source de vérité. Ni le nom du dossier, ni celui de
+    l'application, ni celui du schéma Xcode ne le donnent : ici, les trois
+    diffèrent du dépôt, et c'est exactement ce qui a produit la panne que le
+    contrôle ci-dessous existe pour rendre impossible.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=ROOT, capture_output=True, text=True, timeout=15, check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if result.returncode != 0:
+        return None
+    match = re.search(
+        r"github\.com[:/]([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?\s*$",
+        result.stdout.strip(),
+    )
+    return match.group(1) if match else None
+
+
+def documented_repositories() -> set[str]:
+    """Tous les « propriétaire/dépôt » cités en URL dans la documentation."""
+    found = set()
+    for document in [ROOT / "README.md", *sorted((ROOT / "docs").glob("*.md"))]:
+        if not document.is_file():
+            continue
+        text = document.read_text(encoding="utf-8")
+        found.update(
+            f"{owner}/{repo}"
+            for owner, repo in re.findall(
+                r"https?://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)", text
+            )
+        )
+    return found
 
 
 def report() -> int:

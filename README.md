@@ -175,7 +175,7 @@ d'installer Vocabulle — et de le mettre à jour — depuis AltStore, sans
 télécharger d'artefact à la main :
 
 ```
-https://github.com/Nakirem/Vocabulle/releases/latest/download/altstore.json
+https://github.com/Nakirem/Vocabule/releases/latest/download/altstore.json
 ```
 
 Un envoi sur `main` sans tag compile et teste, mais ne publie rien. Le détail du

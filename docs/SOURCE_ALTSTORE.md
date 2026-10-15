@@ -10,10 +10,17 @@ l'IPA à télécharger.
 ## L'adresse à ajouter
 
 ```
-https://github.com/Nakirem/Vocabulle/releases/latest/download/altstore.json
+https://github.com/Nakirem/Vocabule/releases/latest/download/altstore.json
 ```
 
 Dans AltStore Classic : onglet **Sources** → **+** → coller l'adresse.
+
+**Attention au nom : le dépôt s'appelle `Vocabule` — un seul « l » — alors que
+l'application s'appelle Vocabulle.** L'adresse est donc piégeuse à recopier, et
+une seule lettre de trop suffit à obtenir un 404 que rien n'explique. Ce n'est
+pas une note de prudence : c'est la panne qui a réellement eu lieu, et
+`scripts/validate_project.py` refuse désormais toute URL de dépôt citée dans la
+documentation qui ne désignerait pas le dépôt réel.
 
 Elle ne changera jamais. `releases/latest/download/` est une adresse GitHub qui
 sert toujours les fichiers de la **dernière** version publiée : le contenu
