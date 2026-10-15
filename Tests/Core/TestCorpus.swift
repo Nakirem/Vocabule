@@ -99,6 +99,33 @@ struct TestCorpus: CorpusStore {
             .map(Self.summary(for:))
     }
 
+    /// Index du faux corpus, calé sur son propre ordre : celui des identifiants.
+    ///
+    /// L'identifiant est le terme réduit en slug, donc sa première lettre est
+    /// celle du terme — assez pour que les chemins de code soient exercés. Ce
+    /// n'est pas l'ordre alphabétique français : celui-là est une propriété du
+    /// tri SQLite, et il se vérifie contre la vraie base, pas contre un faux.
+    func letterAnchors(category: EntryCategory?) throws -> [LetterAnchor] {
+        let ids: [EntryID]
+        if let category {
+            ids = idsByCategory[category] ?? []
+        } else {
+            ids = entries.map(\.id).sorted()
+        }
+
+        var anchors: [LetterAnchor] = []
+        var offset = 0
+        while offset < ids.count {
+            let letter = String(ids[offset].rawValue.prefix(1)).uppercased()
+            let count = ids[offset...]
+                .prefix { String($0.rawValue.prefix(1)).uppercased() == letter }
+                .count
+            anchors.append(LetterAnchor(letter: letter, offset: offset, count: count))
+            offset += count
+        }
+        return anchors
+    }
+
     func entryCount() throws -> Int {
         entries.count
     }

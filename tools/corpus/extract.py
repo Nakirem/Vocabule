@@ -444,11 +444,19 @@ def parse_example(raw: str, page_title: str) -> Example | None:
     text = text.strip()
     if not MIN_EXAMPLE_LENGTH <= len(text) <= MAX_EXAMPLE_LENGTH:
         return None
-    # Un exemple sans provenance nommée n'est pas publiable : on ne peut pas
-    # dire d'où il vient, et le modèle de données le refuse.
-    if not source_title and not author:
-        return None
 
+    # La provenance est toujours nommée, et jamais inventée. Quand la ligne
+    # nomme un auteur ou un ouvrage, c'est lui qui est crédité. Quand elle ne
+    # nomme rien — le cas le plus fréquent — l'exemple est crédité à la page du
+    # Wiktionnaire dont il est réellement tiré : c'est une provenance exacte, et
+    # c'est exactement ce que `split_source` annonçait déjà deux fonctions plus
+    # haut.
+    #
+    # La version précédente refusait ces exemples, faute de provenance nommée.
+    # L'effet était l'inverse de celui recherché : deux fiches sur trois se
+    # retrouvaient sans aucun exemple d'emploi alors que la source en publiait
+    # un, et la fiche ne pouvait plus montrer que sa définition. Rien n'est
+    # inventé ici — le texte vient de la page, et la page est nommée.
     return Example(
         text=text,
         origin="wiktionary",

@@ -89,6 +89,31 @@ public struct CorpusMetadata: Codable, Hashable, Sendable {
     }
 }
 
+/// Une lettre de l'alphabet et le rang de la première fiche qui commence par
+/// elle, dans le parcours de la Collection.
+///
+/// Les deux moitiés sont nécessaires : la lettre à afficher, et le rang à
+/// atteindre. Le rang est un **décalage de pagination**, pas un identifiant,
+/// parce que c'est ce que `summaries(category:limit:offset:)` sait consommer —
+/// la barre de lettres charge donc les pages qu'il faut avant de faire défiler
+/// la liste jusqu'à ce rang.
+public struct LetterAnchor: Sendable, Hashable, Identifiable {
+    /// Lettre affichée, en capitale.
+    public let letter: String
+    /// Rang de la première fiche de la lettre, dans l'ordre du parcours.
+    public let offset: Int
+    /// Nombre de fiches qui commencent par cette lettre.
+    public let count: Int
+
+    public var id: String { letter }
+
+    public init(letter: String, offset: Int, count: Int) {
+        self.letter = letter
+        self.offset = offset
+        self.count = count
+    }
+}
+
 /// Accès en lecture au corpus lexical.
 ///
 /// Le protocole est volontairement étroit : l'extension widget ne doit jamais
@@ -137,6 +162,15 @@ public protocol CorpusStore: Sendable {
         limit: Int,
         offset: Int
     ) throws -> [EntrySummary]
+
+    /// Index alphabétique du parcours, dans l'ordre exact où `summaries` sert
+    /// les fiches.
+    ///
+    /// Les décalages rendus désignent les mêmes fiches que la pagination de
+    /// `summaries` : c'est le même filtre et le même tri. C'est la condition
+    /// pour qu'une barre de lettres soit utile — un index calculé à côté
+    /// enverrait l'utilisateur à côté de la lettre qu'il a touchée.
+    func letterAnchors(category: EntryCategory?) throws -> [LetterAnchor]
 
     /// Nombre total de fiches.
     func entryCount() throws -> Int

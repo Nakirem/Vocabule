@@ -210,7 +210,7 @@ def run() -> None:
         "CODE_SIGN_ENTITLEMENTS": "App/Resources/Vocabulle.entitlements",
         "CODE_SIGN_STYLE": "Automatic",
         "CURRENT_PROJECT_VERSION": "1",
-        "MARKETING_VERSION": "1.0",
+        "MARKETING_VERSION": "1.2",
         "TARGETED_DEVICE_FAMILY": "1",
         "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         "SUPPORTS_MACCATALYST": "NO",
@@ -227,7 +227,7 @@ def run() -> None:
         "CODE_SIGN_ENTITLEMENTS": "Widget/Resources/VocabulleWidget.entitlements",
         "CODE_SIGN_STYLE": "Automatic",
         "CURRENT_PROJECT_VERSION": "1",
-        "MARKETING_VERSION": "1.0",
+        "MARKETING_VERSION": "1.2",
         "TARGETED_DEVICE_FAMILY": "1",
         "SUPPORTED_PLATFORMS": "iphoneos iphonesimulator",
         # Une extension ne s'installe pas seule et n'a pas le droit d'appeler

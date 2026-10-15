@@ -185,7 +185,19 @@ struct TodayWidget: Widget {
         }
         .configurationDisplayName("Découverte du moment")
         .description("Le terme en cours et sa définition courte, directement sur l'écran verrouillé.")
-        .supportedFamilies([.accessoryRectangular, .accessoryInline, .systemSmall])
+        // Les cinq formats sont proposés, et c'est le choix de l'utilisateur qui
+        // décide, pas nous : iOS ne présente que les familles déclarées ici. Le
+        // format rectangulaire de l'écran verrouillé est le plus contraint — il
+        // ne tient pas une définition longue — et quelqu'un qui le trouve trop
+        // petit doit pouvoir prendre le format moyen de l'écran d'accueil sans
+        // qu'on le lui construise.
+        .supportedFamilies([
+            .accessoryInline,
+            .accessoryCircular,
+            .accessoryRectangular,
+            .systemSmall,
+            .systemMedium,
+        ])
     }
 }
 
@@ -202,7 +214,7 @@ struct TodayWidgetView: View {
             .widgetURL(entry.deepLink)
             .containerBackground(for: .widget) {
                 switch family {
-                case .accessoryRectangular, .accessoryInline:
+                case .accessoryInline, .accessoryCircular, .accessoryRectangular:
                     AccessoryWidgetBackground()
                 default:
                     VocabulleTheme.background
@@ -215,8 +227,12 @@ struct TodayWidgetView: View {
         switch family {
         case .accessoryInline:
             inlineContent
+        case .accessoryCircular:
+            circularContent
         case .accessoryRectangular:
             rectangularContent
+        case .systemMedium:
+            mediumContent
         default:
             smallContent
         }
@@ -229,6 +245,27 @@ struct TodayWidgetView: View {
         // définition tronquée qui ne voudrait rien dire.
         Text(entry.term ?? entry.message ?? "Vocabulle")
             .accessibilityLabel(accessibilityText)
+    }
+
+    // MARK: - Écran verrouillé, format circulaire
+
+    /// Le format circulaire ne tient pas une définition, et une définition
+    /// coupée ne dit rien de plus que le mot. Il porte donc le mot seul, réduit
+    /// à ce qui tient, avec le symbole du créneau pour situer la découverte
+    /// dans la journée.
+    private var circularContent: some View {
+        VStack(spacing: 1) {
+            Image(systemName: entry.periodSymbol)
+                .font(.system(size: 9))
+                .accessibilityHidden(true)
+            Text(entry.term ?? entry.message ?? entry.periodName)
+                .font(.system(size: 11, weight: .semibold, design: .serif))
+                .multilineTextAlignment(.center)
+                .lineLimit(3)
+                .minimumScaleFactor(0.5)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityText)
     }
 
     // MARK: - Écran verrouillé, format rectangulaire
@@ -252,24 +289,20 @@ struct TodayWidgetView: View {
             if let definition = entry.definition {
                 Text(definition)
                     .font(.caption2)
+                    // Deux lignes : c'est ce que le format rectangulaire tient.
+                    // `.fixedSize(vertical: true)` demandait la hauteur *idéale*
+                    // du texte dans un cadre de hauteur fixe, ce qui repoussait
+                    // la ligne du terme et coupait la définition en plein mot.
+                    // Laisser le texte se réduire un peu, puis se tronquer
+                    // proprement, donne un résultat lisible. Au-delà, c'est le
+                    // format moyen de l'écran d'accueil qu'il faut choisir :
+                    // aucune définition de 120 caractères ne tiendra jamais ici.
                     .lineLimit(entry.canAct ? 1 : 2)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .minimumScaleFactor(0.85)
             }
 
             if entry.canAct, let entryID = entry.entryID {
-                HStack(spacing: 10) {
-                    Button(intent: ReplaceTermIntent(slotKey: entry.slotKey, shownEntryID: entryID)) {
-                        Label("Autre mot", systemImage: "arrow.triangle.2.circlepath")
-                    }
-                    .accessibilityLabel("Autre mot")
-
-                    Button(intent: MarkKnownIntent(slotKey: entry.slotKey, shownEntryID: entryID)) {
-                        Label("Déjà connu", systemImage: "checkmark.circle")
-                    }
-                    .accessibilityLabel("Déjà connu")
-                }
-                .font(.caption2)
-                .buttonStyle(.plain)
+                actionButtons(entryID: entryID)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -305,6 +338,74 @@ struct TodayWidgetView: View {
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    // MARK: - Écran d'accueil, format moyen
+
+    /// C'est le format qui répond au « widget trop petit » : deux fois la
+    /// surface du petit, donc de quoi porter le terme, sa définition entière et
+    /// les deux actions. Le format moyen de l'écran d'accueil est aussi le seul
+    /// qui laisse réellement tenir une définition de 120 caractères.
+    private var mediumContent: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label(entry.periodName, systemImage: entry.periodSymbol)
+                .font(.caption2)
+                .foregroundStyle(VocabulleTheme.textSecondary)
+
+            if let term = entry.term {
+                Text(term)
+                    .font(VocabulleTheme.termFont(for: .title3))
+                    .foregroundStyle(VocabulleTheme.textPrimary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+
+                if let definition = entry.definition {
+                    Text(definition)
+                        .font(VocabulleTheme.definitionFont)
+                        .foregroundStyle(VocabulleTheme.textSecondary)
+                        .lineLimit(4)
+                        .minimumScaleFactor(0.9)
+                }
+            } else {
+                Text(entry.message ?? "Aucune découverte")
+                    .font(VocabulleTheme.definitionFont)
+                    .foregroundStyle(VocabulleTheme.textSecondary)
+                    .lineLimit(3)
+            }
+
+            Spacer(minLength: 0)
+
+            if entry.canAct, let entryID = entry.entryID {
+                actionButtons(entryID: entryID)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Boutons partagés
+
+    /// Les deux actions du widget, écrites une seule fois.
+    ///
+    /// Elles n'apparaissent que si le conteneur partagé existe : une intention
+    /// qui aboutit ne peut pas écrire l'état si elle n'a nulle part où
+    /// l'écrire, et un bouton visible qui ne fait rien est pire que pas de
+    /// bouton du tout — c'est exactement ce que produit un compte Apple gratuit
+    /// (voir `LIMITES_CONNUES.md`).
+    private func actionButtons(entryID: String) -> some View {
+        HStack(spacing: 10) {
+            Button(intent: ReplaceTermIntent(slotKey: entry.slotKey, shownEntryID: entryID)) {
+                Label("Autre mot", systemImage: "arrow.triangle.2.circlepath")
+            }
+            .accessibilityLabel("Autre mot")
+
+            Button(intent: MarkKnownIntent(slotKey: entry.slotKey, shownEntryID: entryID)) {
+                Label("Déjà connu", systemImage: "checkmark.circle")
+            }
+            .accessibilityLabel("Déjà connu")
+        }
+        .font(.caption2)
+        .buttonStyle(.plain)
     }
 
     private var accessibilityText: String {

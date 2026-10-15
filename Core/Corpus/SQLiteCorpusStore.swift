@@ -289,6 +289,23 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
         return result
     }
 
+    /// Clé de tri du parcours alphabétique de la Collection.
+    ///
+    /// `term_search` est le terme replié — sans accents, en minuscules — que
+    /// produit la même normalisation que la recherche. Trier là-dessus range
+    /// « éphémère » dans les E ; trier sur `term` la placerait après le z, car
+    /// `COLLATE NOCASE` ne replie que l'ASCII et « é » (U+00E9) vaut plus que
+    /// « z ». C'était le défaut : la Collection affichait ses accents à la fin,
+    /// sous des initiales qui n'existent dans aucun alphabet.
+    ///
+    /// Le `replace` replie la ligature « œ », que la normalisation conserve
+    /// volontairement — elle ne décompose ni « œ » ni « æ », comme
+    /// `.diacriticInsensitive` côté Swift. Sans lui, la seule fiche du corpus
+    /// qui commence par « œ » se retrouverait seule après le z, sous une lettre
+    /// que personne ne cherche là. Un dictionnaire français range « œ » avec
+    /// « oe ».
+    private static let browseSortKey = "replace(term_search, 'œ', 'oe')"
+
     public func summaries(category: EntryCategory?, limit: Int, offset: Int) throws -> [EntrySummary] {
         guard limit > 0, offset >= 0 else { return [] }
         var sql = """
@@ -296,7 +313,7 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
         FROM entries
         """
         if category != nil { sql += " WHERE category = ?" }
-        sql += " ORDER BY term COLLATE NOCASE ASC, id ASC LIMIT ? OFFSET ?;"
+        sql += " ORDER BY \(Self.browseSortKey) ASC, id ASC LIMIT ? OFFSET ?;"
 
         var result: [EntrySummary] = []
         try withStatement(sql) { statement in
@@ -312,6 +329,40 @@ public final class SQLiteCorpusStore: CorpusStore, @unchecked Sendable {
             }
         }
         return result
+    }
+
+    public func letterAnchors(category: EntryCategory?) throws -> [LetterAnchor] {
+        // Même filtre et même tri que `summaries`, à la lettre près : les
+        // décalages rendus ici désignent donc les fiches que la pagination
+        // sert réellement. Un index calculé autrement — en comptant les termes
+        // inférieurs à une lettre, par exemple — finirait par désigner un rang
+        // voisin, et l'index de la Collection enverrait l'utilisateur à côté de
+        // la lettre qu'il a touchée.
+        var sql = """
+        SELECT substr(\(Self.browseSortKey), 1, 1) AS letter, COUNT(*) AS total
+        FROM entries
+        """
+        if category != nil { sql += " WHERE category = ?" }
+        sql += " GROUP BY letter ORDER BY letter ASC;"
+
+        var anchors: [LetterAnchor] = []
+        var offset = 0
+        try withStatement(sql) { statement in
+            if let category { bind(statement, 1, category.rawValue) }
+            while sqlite3_step(statement) == SQLITE_ROW {
+                guard let letter = text(statement, 0), !letter.isEmpty else { continue }
+                let count = Int(sqlite3_column_int64(statement, 1))
+                anchors.append(
+                    LetterAnchor(letter: letter.uppercased(), offset: offset, count: count)
+                )
+                // Sous un tri lexicographique, toutes les chaînes qui partagent
+                // une initiale sont contiguës : additionner les compteurs suffit
+                // donc à retrouver le premier rang de chaque lettre, sans jamais
+                // relire la table.
+                offset += count
+            }
+        }
+        return anchors
     }
 
     public func entryCount() throws -> Int {

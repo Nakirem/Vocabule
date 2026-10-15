@@ -293,6 +293,12 @@ final class AppEnvironment {
         return (try? session.corpus.summaries(category: category, limit: limit, offset: offset)) ?? []
     }
 
+    /// Index alphabétique du parcours, pour la barre de lettres de la Collection.
+    func letterAnchors(category: EntryCategory?) -> [LetterAnchor] {
+        guard let session else { return [] }
+        return (try? session.corpus.letterAnchors(category: category)) ?? []
+    }
+
     func search(_ query: String, limit: Int = 50) -> [EntrySummary] {
         guard let session, !query.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
         return (try? session.corpus.search(query, limit: limit)) ?? []

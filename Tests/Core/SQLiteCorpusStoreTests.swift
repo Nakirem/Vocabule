@@ -1,3 +1,4 @@
+import Foundation
 import XCTest
 @testable import VocabulleCore
 
@@ -239,6 +240,67 @@ final class SQLiteCorpusStoreTests: XCTestCase {
             "Deux pages ne doivent pas se recouvrir, sinon la Collection afficherait des doublons"
         )
         XCTAssertTrue(try store.summaries(category: nil, limit: 20, offset: -1).isEmpty)
+    }
+
+    /// L'index alphabétique désigne vraiment la fiche qu'il annonce.
+    ///
+    /// C'est l'invariant dont dépend toute la barre de lettres de la Collection :
+    /// toucher « E » charge les pages manquantes, puis défile jusqu'au rang rendu
+    /// par `letterAnchors`. Si ce rang désignait une autre fiche — ou si les
+    /// compteurs ne couvraient pas exactement le corpus — la barre enverrait à
+    /// côté, et rien à l'écran ne le dirait.
+    ///
+    /// Le tri est celui de `summaries`, donc replié : « à l'ancienne » compte
+    /// pour la lettre A et « œil » pour la lettre O. C'est exactement ce que la
+    /// clé de tri `replace(term_search, 'œ', 'oe')` produit.
+    func testLetterAnchorsPointAtTheFirstEntryOfEachLetter() throws {
+        let store = try makeStore()
+        let anchors = try store.letterAnchors(category: nil)
+
+        XCTAssertFalse(anchors.isEmpty, "Le corpus ne peut pas être vide")
+        XCTAssertEqual(anchors.first?.offset, 0, "La première lettre commence au premier rang")
+        XCTAssertEqual(
+            anchors.map(\.letter),
+            anchors.map(\.letter).sorted(),
+            "Les lettres doivent être croissantes"
+        )
+        XCTAssertEqual(
+            Set(anchors.map(\.letter)).count,
+            anchors.count,
+            "Une lettre ne doit apparaître qu'une fois"
+        )
+
+        var expectedOffset = 0
+        for anchor in anchors {
+            XCTAssertEqual(anchor.offset, expectedOffset, "Décalage annoncé pour « \(anchor.letter) »")
+            XCTAssertGreaterThan(anchor.count, 0, "« \(anchor.letter) » ne doit pas être vide")
+
+            let page = try store.summaries(category: nil, limit: 1, offset: anchor.offset)
+            let term = try XCTUnwrap(page.first?.term)
+            XCTAssertEqual(
+                Self.browseInitial(of: term),
+                Self.browseInitial(of: anchor.letter),
+                "Le rang \(anchor.offset), annoncé pour « \(anchor.letter) », porte sur « \(term) »"
+            )
+
+            expectedOffset += anchor.count
+        }
+        XCTAssertEqual(
+            expectedOffset,
+            try store.entryCount(),
+            "Les compteurs doivent couvrir le corpus exactement"
+        )
+    }
+
+    /// Première lettre d'un texte, repliée comme la clé de tri du corpus.
+    private static func browseInitial(of text: String) -> String {
+        let folded = text
+            .replacingOccurrences(of: "œ", with: "oe")
+            .folding(
+                options: [.diacriticInsensitive, .caseInsensitive],
+                locale: Locale(identifier: "fr_FR")
+            )
+        return String(folded.prefix(1)).uppercased()
     }
 
     /// Les termes associés pointent vers des fiches qui existent.

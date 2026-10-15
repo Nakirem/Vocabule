@@ -597,12 +597,22 @@ def main(argv: list[str] | None = None) -> int:
     entries: list[Entry] = []
     rejections: list[Rejection] = []
     seen_ids: set[str] = set()
+    # Identifiants des termes déjà examinés et écartés. Un terme rejeté à la
+    # première vague peut revenir à la seconde comme voisin récolté : sans cet
+    # ensemble, « assidu » était rejeté deux fois, le rapport comptait deux
+    # échecs pour une seule fiche manquante, et la récolte payait une seconde
+    # requête pour une page déjà lue.
+    rejected_ids: set[str] = set()
 
     def extract_all(batch: list[dict], pages_by_term: dict) -> None:
         for candidate in batch:
             term = candidate["term"]
+            identifier = norm.slug(term)
+            if identifier and identifier in rejected_ids:
+                continue
             page = pages_by_term.get(term)
             if page is None:
+                rejected_ids.add(identifier)
                 rejections.append(Rejection(term=term, reason="page absente du Wiktionnaire"))
                 continue
 
@@ -618,9 +628,11 @@ def main(argv: list[str] | None = None) -> int:
                 stats=stats,
             )
             if entry is None:
+                rejected_ids.add(identifier)
                 rejections.append(Rejection(term=term, reason=reason or "extraction impossible"))
                 continue
             if entry.id in seen_ids:
+                rejected_ids.add(identifier)
                 rejections.append(
                     Rejection(term=term, reason=f"identifiant déjà pris ({entry.id})")
                 )
@@ -650,7 +662,10 @@ def main(argv: list[str] | None = None) -> int:
                 break
             batch = harvest_candidates(
                 entries,
-                seen_ids,
+                # Les termes déjà écartés sont exclus de la récolte comme les
+                # fiches déjà retenues : les redemander ferait payer une requête
+                # pour une page dont on sait déjà qu'elle ne donnera rien.
+                seen_ids | rejected_ids,
                 limit=remaining,
                 per_category_limit=args.harvest_per_category,
             )

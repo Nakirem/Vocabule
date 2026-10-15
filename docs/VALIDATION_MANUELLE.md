@@ -41,7 +41,16 @@ conservant les extensions.
 
 - [ ] Verrouiller l'iPhone. Le widget apparaît sur l'écran verrouillé.
       *(S'il n'est pas déjà configuré : appui long sur l'écran verrouillé →
-      Personnaliser → ajouter le widget Vocabulle en format rectangulaire.)*
+      Personnaliser → ajouter le widget Vocabulle.)*
+- [ ] **Les cinq formats sont proposés** par le sélecteur d'iOS : en ligne,
+      circulaire et rectangulaire sur l'écran verrouillé ; petit et moyen sur
+      l'écran d'accueil. Si un format manque, c'est `supportedFamilies` qui est
+      en cause, pas iOS.
+- [ ] Format **moyen de l'écran d'accueil** : le terme, la définition courte
+      **entière**, et — si le conteneur est partagé — les deux boutons. C'est le
+      format à conseiller si le rectangulaire est jugé trop petit.
+- [ ] Format **circulaire** : le terme reste lisible ; il se réduit jusqu'à la
+      moitié de sa taille avant de se tronquer.
 - [ ] Le terme et la définition courte sont lisibles, non tronqués au milieu
       d'un mot.
 - [ ] **Le terme affiché par le widget est exactement celui de l'écran
@@ -82,6 +91,15 @@ l'état est « Partagé » ou « Isolé ».
 - [ ] Si l'état est **« Isolé »** : les boutons sont **absents** du widget, et
       l'application l'explique. C'est le comportement attendu avec un compte
       Apple gratuit.
+      *(C'est l'état constaté sur l'appareil cible : la liste des groupes
+      essayés ne contient que `group.fr.vocabulle.app`, donc aucun conteneur
+      partagé n'a été accordé. Dans cet état, « Autre mot » **ne peut pas**
+      changer le widget : l'application recharge bien la chronologie, mais le
+      widget recalcule le tirage nominal, faute d'état partagé. Voir
+      `LIMITES_CONNUES.md` §2.)*
+- [ ] Bouton **« Autre mot » de l'application** (écran Fiche) : il change le
+      terme affiché **par l'application**. Il ne changera celui du widget que si
+      l'état ci-dessus affiche « Partagé ».
 - [ ] Dans les deux cas : **activer le mode avion et rouvrir le widget.** Rien
       ne doit se figer ni afficher un écran vide.
 

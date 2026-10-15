@@ -16,9 +16,9 @@ un coureur macOS — et rien ne l'a été sur un appareil réel.
 **Ce que la CI vérifie à chaque exécution** (dernier passage vert, Xcode 16.4
 build 16F6, coureur `macos-15`) :
 
-- Les **113 tests SwiftPM** passent : créneaux, changements d'heure, passage de
+- Les **114 tests SwiftPM** passent : créneaux, changements d'heure, passage de
   minuit, tirage déterministe, actions périmées, écritures concurrentes, et le
-  décodage des 1 432 fiches du corpus réel.
+  décodage des 1 938 fiches du corpus réel.
 - Les **9 tests XCTest** passent sur un simulateur iPhone.
 - L'archive `Release` pour `generic/platform=iOS` est produite, et l'extension
   widget est contrôlée présente dans `Vocabulle.app/PlugIns/`.
@@ -51,6 +51,22 @@ erreur.
 **Conséquence :** dans ce cas, le widget ne peut pas enregistrer « Autre mot »
 ni « Déjà connu ». Ces boutons ne sont donc **pas affichés**, et les Réglages
 indiquent « Isolé » avec la liste des groupes essayés.
+
+**C'est le cas constaté sur l'appareil cible.** Les Réglages y affichent
+« Isolé », et la liste des groupes essayés ne contient que
+`group.fr.vocabulle.app` — celui que l'application demande. Le système n'a donc
+accordé **aucun** conteneur partagé : la demande a été refusée, ce n'est pas un
+nom mal orthographié qu'il suffirait de corriger.
+
+**Ce que cela implique pour « Autre mot » dans l'application.** Le bouton de la
+fiche appelle bien `WidgetCenter.reloadAllTimelines()`, et cet appel part depuis
+la première version. Mais recharger une chronologie ne transmet aucune donnée :
+le widget se recalcule à partir de l'état partagé — qui n'existe pas ici — et
+retombe sur le tirage nominal du créneau. Tant que le conteneur partagé est
+refusé, **aucun** remplacement choisi dans l'application ne peut apparaître sur
+l'écran verrouillé. Ce n'est pas un défaut de code, et il n'y a pas de correction
+possible : iOS n'offre aucun moyen à une application d'écrire dans le conteneur
+de son extension sans App Group.
 
 **Ce qui est fait à la place :** le widget recalcule le **tirage nominal** du
 créneau. Cette fonction ne dépend d'aucun état utilisateur, donc le widget
@@ -90,9 +106,9 @@ Le corpus est un fichier SQLite embarqué dans le bundle. Il ne se met à jour
 que par une nouvelle version de l'application.
 
 **Conséquence :** le moteur applique la répartition 40/25/20/15 à chaque cycle
-de vingt créneaux, soit 8 fiches littéraires par cycle. Le littéraire — 434
-fiches sur 1 432 — est donc la catégorie qui s'épuise la première : au bout de
-**54 cycles**, soit 1 080 créneaux, ou **environ 360 jours** à trois découvertes
+de vingt créneaux, soit 8 fiches littéraires par cycle. Le littéraire — 879
+fiches sur 1 938 — est donc la catégorie qui s'épuise la première : au bout de
+**109 cycles**, soit 2 180 créneaux, ou **environ 727 jours** à trois découvertes
 par jour, pour un utilisateur qui ne remplace jamais un terme. C'est bien plus
 que les « 100 jours » visés par le cahier des charges, mais l'épuisement finit
 par arriver.
@@ -127,8 +143,13 @@ qualités et les défauts :
 
 - Certaines définitions sont très courtes (« Mourir. », « Prière. ») : elles
   sont exactes mais peu explicatives.
-- Certaines fiches ont peu ou pas d'exemples : la chaîne ne retient que les
-  exemples dont la provenance est nommée, ce qui en écarte beaucoup.
+- Les exemples sont ceux que la source publie : des phrases d'illustration, pas
+  des citations littéraires. Certains sont courts et purement grammaticaux
+  (« Intention actuelle s'oppose à intention virtuelle. ») — exacts, mais peu
+  parlants.
+- **1 163 fiches sur 1 938 (60 %) portent au moins un exemple**, contre 484
+  (34 %) avant la version 1.2. Les autres n'en ont pas parce que la source n'en
+  publie aucun dans sa section française.
 - Les registres sont ceux du Wiktionnaire, qui peut les attribuer de façon
   inégale selon les pages.
 
@@ -149,7 +170,7 @@ marqués « Wiktionnaire » et « Contenu adapté et abrégé pour Vocabulle ».
 ## 8. Choix techniques qui ont un coût
 
 **Le corpus est dupliqué** dans le bundle de l'application et dans celui de
-l'extension : 3,4 Mo × 2. L'alternative — un seul exemplaire dans le conteneur
+l'extension : 4,8 Mo × 2. L'alternative — un seul exemplaire dans le conteneur
 partagé — ne fonctionne pas quand il n'y a pas de conteneur partagé (§2), et le
 widget se retrouverait sans corpus. Le coût est mesuré et acceptable.
 
@@ -175,13 +196,30 @@ lui-même, sur deux sauts depuis la liste éditoriale. Au-delà, la sélection
 cesserait d'être éditoriale pour devenir un parcours automatique du
 dictionnaire — ce que le cahier des charges interdit.
 
-**Conséquence :** la répartition obtenue (30 % littéraire, 22 % expressions,
-25 % conversation, 22 % spécialisé) s'écarte de la cible 40/25/20/15. Cela
+**Conséquence :** la répartition obtenue (45 % littéraire, 18 % expressions,
+26 % conversation, 10 % spécialisé) s'écarte de la cible 40/25/20/15. Cela
 n'affecte **pas** ce que voit l'utilisateur : le moteur de sélection applique la
 répartition 40/25/20/15 à chaque cycle de vingt créneaux, quelle que soit la
 composition du corpus. Ce qui compte est que chaque catégorie ait assez de
-fiches pour alimenter ces cycles, et c'est le cas (54 à 108 cycles par
+fiches pour alimenter ces cycles, et c'est le cas (65 à 126 cycles par
 catégorie).
+
+**Ce qui a changé en 1.2 :** la récolte a été élargie, et le corpus passe de
+1 432 à 1 938 fiches. La commande exacte est celle-ci — elle n'était documentée
+nulle part, ce qui rendait le corpus impossible à reproduire à l'identique :
+
+```bash
+python3 -m tools.corpus.build \
+  --out Resources/vocabulle-corpus.sqlite \
+  --report tools/corpus/report.json \
+  --harvest-max 2600 --harvest-per-category 800
+```
+
+Le principal motif de rejet reste le même — « nombre de termes associés hors
+plage », 865 candidats sur 1 129 — et il n'est **pas** contournable : le cahier
+des charges exige deux à quatre termes associés, donc une fiche que la source
+n'entoure que d'un seul lien attesté est écartée, aussi bonne soit-elle. C'est ce
+plancher, et non le nombre de candidats, qui fixe la taille du corpus.
 
 ## 10. Le format de l'état utilisateur
 

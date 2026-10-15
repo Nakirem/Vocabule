@@ -13,14 +13,22 @@ fonctionne dès le premier lancement, en mode avion.
 
 - **Trois créneaux quotidiens**, par défaut 08:00, 14:00 et 20:00, modifiables.
   Le mot du soir reste affiché après minuit, jusqu'au créneau du matin.
-- **Un widget d'écran verrouillé** (`accessoryRectangular`) qui affiche le terme
-  et sa définition courte, et ouvre la fiche exacte qu'il montre — même si le
-  créneau a changé entre l'affichage et le toucher.
+- **Un widget, cinq formats au choix** : en ligne, circulaire et rectangulaire
+  sur l'écran verrouillé, petit et moyen sur l'écran d'accueil. Il affiche le
+  terme et sa définition courte, et ouvre la fiche exacte qu'il montre — même si
+  le créneau a changé entre l'affichage et le toucher. Le format moyen est celui
+  qui laisse tenir une définition entière : le rectangulaire, le plus contraint,
+  la tronque.
 - **« Autre mot »** remplace la découverte sans la marquer comme sue.
   **« Déjà connu »** l'écarte des découvertes suivantes, jusqu'à ce qu'on la
   décoche.
-- **Collection** : parcourir, chercher sans accents (« ephemere » trouve
-  « éphémère »), retrouver ses favoris et les termes marqués connus.
+- **Collection** : parcourir dans l'ordre alphabétique français — les accents
+  sont rangés dans leur lettre, pas après le Z — avec une barre de lettres pour
+  sauter directement à une initiale ; chercher sans accents (« ephemere » trouve
+  « éphémère ») ; retrouver ses favoris et les termes marqués connus.
+- **Un exemple d'emploi** sur 60 % des fiches, toujours attribué : à l'auteur
+  quand la source le nomme, à la page du Wiktionnaire dont il est tiré sinon.
+  Aucune attribution n'est inventée, et une fiche sans exemple n'en affiche pas.
 - **Réglages** : heures, fuseau horaire, notifications facultatives (désactivées
   par défaut), état du corpus et du partage avec le widget.
 
@@ -78,23 +86,23 @@ python3 scripts/validate_project.py     # contrôles structurels, sans Xcode
 
 ## Le corpus
 
-**1 432 fiches vérifiées**, produites à partir du Wiktionnaire francophone.
+**1 938 fiches vérifiées**, produites à partir du Wiktionnaire francophone.
 
 | Catégorie | Fiches | Part | Quota par cycle de 20 créneaux | Cycles couverts |
 | --- | --- | --- | --- | --- |
-| Littéraire | 434 | 30,3 % | 8 | 54 |
-| Expression | 308 | 21,5 % | 5 | 61 |
-| Conversation | 366 | 25,6 % | 4 | 91 |
-| Spécialisé | 324 | 22,6 % | 3 | 108 |
+| Littéraire | 879 | 45,4 % | 8 | 109 |
+| Expression | 357 | 18,4 % | 5 | 71 |
+| Conversation | 506 | 26,1 % | 4 | 126 |
+| Spécialisé | 196 | 10,1 % | 3 | 65 |
 
-Taille de la base : **3,4 Mo**, très en deçà du plafond de 100 Mo. Elle est
-copiée dans les deux bundles (application et extension), soit 6,8 Mo au total :
+Taille de la base : **4,8 Mo**, très en deçà du plafond de 100 Mo. Elle est
+copiée dans les deux bundles (application et extension), soit 9,6 Mo au total :
 c'est le prix de l'indépendance du widget vis-à-vis d'un conteneur partagé qui
 n'existe pas toujours.
 
 La colonne « cycles couverts » indique combien de fois le corpus peut être
 parcouru en entier avant épuisement d'une catégorie. Le facteur limitant est le
-littéraire, avec 54 cycles de vingt créneaux — soit environ 360 jours à trois
+littéraire, avec 109 cycles de vingt créneaux — soit environ 727 jours à trois
 découvertes par jour.
 
 ### Comment il est produit

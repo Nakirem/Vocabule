@@ -27,6 +27,7 @@ struct CollectionView: View {
     @State private var category: EntryCategory?
     @State private var query = ""
     @State private var items: [EntrySummary] = []
+    @State private var anchors: [LetterAnchor] = []
     @State private var reachedEnd = false
     @State private var isLoading = false
 
@@ -101,31 +102,36 @@ struct CollectionView: View {
         if items.isEmpty && !isLoading {
             emptyState
         } else {
-            List {
-                ForEach(items) { summary in
-                    Button {
-                        environment.presentEntry(id: summary.id)
-                    } label: {
-                        SummaryRow(summary: summary, isFavourite: environment.isFavourite(summary.id))
+            ScrollViewReader { proxy in
+                List {
+                    ForEach(items) { summary in
+                        Button {
+                            environment.presentEntry(id: summary.id)
+                        } label: {
+                            SummaryRow(summary: summary, isFavourite: environment.isFavourite(summary.id))
+                        }
+                        .buttonStyle(.plain)
+                        .listRowBackground(VocabulleTheme.surface)
+                        .onAppear {
+                            if summary.id == items.last?.id { loadMore() }
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .listRowBackground(VocabulleTheme.surface)
-                    .onAppear {
-                        if summary.id == items.last?.id { loadMore() }
+                    if isLoading && !reachedEnd {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .listRowBackground(Color.clear)
                     }
                 }
-                if isLoading && !reachedEnd {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                        Spacer()
-                    }
-                    .listRowBackground(Color.clear)
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(VocabulleTheme.background)
+                .overlay(alignment: .trailing) {
+                    if showsLetterIndex { letterIndex(proxy) }
                 }
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(VocabulleTheme.background)
         }
     }
 
@@ -157,15 +163,80 @@ struct CollectionView: View {
         }
     }
 
+    // MARK: - Index alphabétique
+
+    /// La barre de lettres n'a de sens que sur le parcours alphabétique complet.
+    ///
+    /// Une recherche classe par pertinence, les favoris et les « déjà connus »
+    /// sont triés par terme côté Swift : dans les trois cas les décalages de
+    /// `anchors` ne désigneraient plus la bonne ligne, et la barre enverrait à
+    /// côté.
+    private var showsLetterIndex: Bool {
+        mode == .browse
+            && query.trimmingCharacters(in: .whitespaces).isEmpty
+            && !anchors.isEmpty
+    }
+
+    /// Barre de lettres, à droite de la liste.
+    ///
+    /// Elle ne contient que les lettres réellement présentes dans le corpus —
+    /// ni K ni Y aujourd'hui. Une barre qui afficherait tout l'alphabet
+    /// proposerait des lettres vides, et une lettre qui ne mène nulle part est
+    /// pire que pas de lettre du tout.
+    private func letterIndex(_ proxy: ScrollViewProxy) -> some View {
+        VStack(spacing: 0) {
+            ForEach(anchors) { anchor in
+                Button {
+                    jump(to: anchor, proxy: proxy)
+                } label: {
+                    Text(anchor.letter)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(VocabulleTheme.textSecondary)
+                        .frame(width: 18, height: 12)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Aller à la lettre \(anchor.letter), \(anchor.count) fiches")
+            }
+        }
+        .padding(.vertical, VocabulleTheme.Spacing.tight)
+        .background(Capsule().fill(VocabulleTheme.surface.opacity(0.92)))
+        .padding(.trailing, 2)
+    }
+
+    /// Fait défiler la liste jusqu'à la lettre touchée.
+    ///
+    /// Le rang visé se trouve souvent dans une page que la liste n'a pas encore
+    /// chargée — « A » compte près de deux cents fiches, soit cinq pages. On
+    /// charge donc les pages manquantes avant de défiler : sans cela,
+    /// `scrollTo` viserait un identifiant absent de la liste, et le doigt ne
+    /// produirait rien du tout.
+    private func jump(to anchor: LetterAnchor, proxy: ScrollViewProxy) {
+        while items.count <= anchor.offset, !reachedEnd {
+            loadPage()
+        }
+        guard items.indices.contains(anchor.offset) else { return }
+        withAnimation {
+            proxy.scrollTo(items[anchor.offset].id, anchor: .top)
+        }
+    }
+
     // MARK: - Chargement
 
     private func reload() {
         items = []
         reachedEnd = false
+        anchors = mode == .browse ? environment.letterAnchors(category: category) : []
         loadMore()
     }
 
     private func loadMore() {
+        loadPage()
+    }
+
+    /// Charge une page de plus, et une seule. Sans effet si une page est déjà en
+    /// cours ou si la fin est atteinte.
+    private func loadPage() {
         guard !isLoading, !reachedEnd else { return }
         isLoading = true
         defer { isLoading = false }
